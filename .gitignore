@@ -1,0 +1,52 @@
+# OpenClaw .gitignore
+
+# Secrets
+.env
+.env.local
+.env.*.local
+*.env
+secrets.json
+*api_key*
+*secret*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+eggs/
+.eggs/
+*.egg-info/
+*.egg
+venv/
+.venv/
+env/
+
+# Project
+data/market_cache/**/*.parquet
+data/market_cache/metadata.json
+data/signals/*
+!data/signals/.gitkeep
+data/reports/*
+!data/reports/.gitkeep
+*.log
+logs/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/

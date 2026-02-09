@@ -1,0 +1,20 @@
+# XAUUSD-specific overrides
+
+symbol: XAUUSD
+timeframes:
+  - 15m
+  - 1h
+
+backtest:
+  default_period_days: 90
+  tp_r: 2.0
+  sl_r: 1.0
+  session_filter: null  # or Tokyo, London, NY
+
+risk:
+  max_position_pct: 0.015
+  max_daily_loss_r: 2.5
+
+strategy:
+  name: sqe_xauusd
+  # SQE / ICT params can go here

@@ -1,0 +1,13 @@
+# OpenClaw – use "pip install -e ." for editable install; or:
+pandas>=2.0
+numpy>=1.24
+pyyaml>=6.0
+pyarrow>=12.0
+python-dotenv>=1.0
+
+# Optional: data fetch
+# yfinance>=0.2
+
+# Dev
+# pytest>=7.0
+# pytest-cov

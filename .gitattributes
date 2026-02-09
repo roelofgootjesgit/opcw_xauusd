@@ -1,0 +1,6 @@
+* text=auto eol=lf
+*.py text diff=python
+*.yaml text
+*.yml text
+*.md text
+*.parquet binary

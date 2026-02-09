@@ -1,0 +1,1 @@
+# Indicators: ATR, EMA, swings
