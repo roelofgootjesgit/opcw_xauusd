@@ -1,4 +1,4 @@
-# OpenClaw Architecture
+# oclw_bot Architecture
 
 ## Overview
 

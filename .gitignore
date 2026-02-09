@@ -1,4 +1,4 @@
-# OpenClaw .gitignore
+# oclw_bot .gitignore
 
 # Secrets
 .env

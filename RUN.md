@@ -1,25 +1,25 @@
-# How to run OpenClaw
+# How to run oclw_bot
 
 ## Setup
 
 1. Copy `.env.example` to `.env` and set variables if needed.
-2. Install: `pip install -e .` (this registers the `openclaw` command).
+2. Install: `pip install -e .` (this registers the `oclw_bot` command).
 3. Place or generate Parquet data under `data/market_cache/XAUUSD/` (e.g. `1h.parquet`, `15m.parquet`).
 
 ## Modes (CLI)
 
-Use the **openclaw** command after install:
+Use the **oclw_bot** command after install:
 
 ```bash
 # Backtest with default config
-openclaw backtest
+oclw_bot backtest
 
 # Backtest with XAUUSD config
-openclaw backtest --config configs/xauusd.yaml
+oclw_bot backtest --config configs/xauusd.yaml
 
 # Download/cache data only
-openclaw fetch --symbol XAUUSD --timeframe 15m
-openclaw fetch -s XAUUSD -t 1h -d 90
+oclw_bot fetch --symbol XAUUSD --timeframe 15m
+oclw_bot fetch -s XAUUSD -t 1h -d 90
 ```
 
 Alternative (without installing the script):

@@ -1,0 +1,16 @@
+{
+  "run_id": "baseline-placeholder",
+  "git_commit": "none",
+  "tests": { "passed": 0, "failed": 0 },
+  "kpis": {
+    "net_pnl": 0,
+    "profit_factor": 0,
+    "max_drawdown": 0,
+    "winrate": 0,
+    "win_rate_pct": 0,
+    "expectancy_r": 0,
+    "trade_count": 0,
+    "avg_holding_hours": 0
+  },
+  "_comment": "oclw_bot: Replace with python scripts/make_report.py --baseline (after first successful run with data)"
+}

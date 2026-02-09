@@ -1,0 +1,18 @@
+{
+  "run_id": "2026-02-09T16:03:04Z",
+  "git_commit": "34046113a778",
+  "tests": {
+    "passed": 12,
+    "failed": 0
+  },
+  "kpis": {
+    "net_pnl": 0.0,
+    "profit_factor": 0.0,
+    "max_drawdown": 0.0,
+    "winrate": 0.0,
+    "win_rate_pct": 0.0,
+    "expectancy_r": 0.0,
+    "trade_count": 0,
+    "avg_holding_hours": 0.0
+  }
+}

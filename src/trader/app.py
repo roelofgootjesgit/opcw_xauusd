@@ -32,7 +32,7 @@ def cmd_fetch(args: argparse.Namespace) -> int:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(prog="openclaw", description="OpenClaw trader CLI")
+    parser = argparse.ArgumentParser(prog="oclw_bot", description="oclw_bot trader CLI")
     parser.add_argument("--config", "-c", default=None, help="Path to YAML config")
     sub = parser.add_subparsers(dest="command", required=True)
 

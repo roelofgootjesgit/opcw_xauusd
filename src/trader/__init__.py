@@ -1,1 +1,1 @@
-# OpenClaw trader package
+# oclw_bot trader package
