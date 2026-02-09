@@ -30,10 +30,17 @@ def load_parquet(
             df = df.set_index("timestamp")
         df.index = pd.to_datetime(df.index)
 
+    # Align timezone: if index is tz-aware, make start/end tz-aware (UTC) so comparison works
     if start is not None:
-        df = df[df.index >= pd.Timestamp(start)]
+        start_ts = pd.Timestamp(start)
+        if df.index.tz is not None and start_ts.tz is None:
+            start_ts = start_ts.tz_localize("UTC")
+        df = df[df.index >= start_ts]
     if end is not None:
-        df = df[df.index <= pd.Timestamp(end)]
+        end_ts = pd.Timestamp(end)
+        if df.index.tz is not None and end_ts.tz is None:
+            end_ts = end_ts.tz_localize("UTC")
+        df = df[df.index <= end_ts]
     return df
 
 

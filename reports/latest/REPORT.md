@@ -1,42 +1,29 @@
 # oclw_bot Report
 
-**Run ID:** 2026-02-09T16:03:04Z  
-**Git:** `34046113a778`  
+**Run ID:** 2026-02-09T20:09:18Z  
+**Git:** `0958d74dec94`  
 **Status:** PASS
 
 ## Summary
-- Tests: 12 passed, 0 failed
-- KPIs: net_pnl=0.00, PF=0.00, winrate=0.0%, max_dd=0.00R, trades=0
+- Tests: 0 passed, 0 failed
+- KPIs: net_pnl=58.15, PF=1.28, winrate=39.0%, max_dd=-7.00R, trades=41
 
 ## Failed tests (last run)
 ```
-============================= test session starts =============================
-platform win32 -- Python 3.11.0, pytest-8.4.2, pluggy-1.6.0
-rootdir: C:\Users\Gebruiker\opclw_xauusd
-configfile: pyproject.toml
-plugins: anyio-4.9.0
-collected 13 items
-
-tests\integration\test_pipeline.py ..                                    [ 15%]
-tests\performance\test_runtime_limits.py .                               [ 23%]
-tests\regression\test_baseline_guardrails.py .s                          [ 38%]
-tests\test_sqe_smoke.py ...                                              [ 61%]
-tests\unit\test_indicators.py .....                                      [100%]
-
-======================== 12 passed, 1 skipped in 8.14s ========================
+C:\Users\Gebruiker\opclw_xauusd\.venv\Scripts\python.exe: No module named pytest
 
 ```
 
 ## KPIs (this run)
 | Metric | Value |
 |--------|-------|
-| net_pnl | 0.0 |
-| profit_factor | 0.00 |
-| max_drawdown | 0.00 |
-| winrate | 0.0% |
-| expectancy_r | 0.00 |
-| trade_count | 0 |
-| avg_holding_hours | 0.00 |
+| net_pnl | 58.150562686008925 |
+| profit_factor | 1.28 |
+| max_drawdown | -7.00 |
+| winrate | 39.0% |
+| expectancy_r | 0.17 |
+| trade_count | 41 |
+| avg_holding_hours | 2.96 |
 
 ## Next actions
 - If FAIL: fix failing tests or backtest error before merging.

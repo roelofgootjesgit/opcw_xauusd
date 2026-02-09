@@ -21,3 +21,4 @@ risk:
 logging:
   level: INFO
   format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file_path: logs/oclw_bot.log

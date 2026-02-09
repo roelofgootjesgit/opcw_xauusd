@@ -56,7 +56,7 @@ def run_pytest() -> tuple[int, int, str]:
     return passed, failed, out[-2000:] if len(out) > 2000 else out
 
 
-def run_backtest_and_metrics(config_path: str | None) -> dict:
+def run_backtest_and_metrics(config_path: str | None, period_days: int | None = None) -> dict:
     """Run backtest, return metrics dict for KPIs."""
     root = Path(__file__).resolve().parents[1]
     sys.path.insert(0, str(root))
@@ -64,6 +64,8 @@ def run_backtest_and_metrics(config_path: str | None) -> dict:
     from src.trader.backtest.engine import run_backtest
     from src.trader.backtest.metrics import compute_metrics
     cfg = load_config(config_path)
+    if period_days is not None:
+        cfg.setdefault("backtest", {})["default_period_days"] = period_days
     trades = run_backtest(cfg)
     m = compute_metrics(trades)
     return m
@@ -73,8 +75,13 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="oclw_bot report generator")
     ap.add_argument("--baseline", action="store_true", help="Save metrics as baseline.json")
     ap.add_argument("--config", "-c", default=None, help="Config YAML path for backtest")
+    ap.add_argument("--days", "-d", type=int, default=None, help="Override backtest period (days), e.g. 30 for 1 month")
     args = ap.parse_args()
     root = Path(__file__).resolve().parents[1]
+    sys.path.insert(0, str(root))
+    from src.trader.config import load_config as _load_cfg
+    from src.trader.logging_config import setup_logging
+    setup_logging(_load_cfg(args.config))
     latest_dir = root / "reports" / "latest"
     history_dir = root / "reports" / "history"
     latest_dir.mkdir(parents=True, exist_ok=True)
@@ -89,7 +96,7 @@ def main() -> None:
 
     # 2) Run backtest and get KPIs
     try:
-        kpis = run_backtest_and_metrics(args.config)
+        kpis = run_backtest_and_metrics(args.config, period_days=args.days)
     except Exception as e:
         kpis = {
             "net_pnl": 0.0,

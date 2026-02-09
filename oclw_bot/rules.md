@@ -4,6 +4,22 @@ Deze regels gelden voor de Tester-Agent en Improver-Agent in de VPS Test → Rap
 
 ---
 
+## 0. Canonieke principes (onwijzigbaar)
+
+**Bron:** `docs/OCLW_PRINCIPLES.md`
+
+- **Principe:** Meten → Wachten → Reageren. Geen voorspellen, gokken, compenseren.
+- **Kern:** Alleen marktstructuur classificeren, liquiditeit lokaliseren, reactie op manipulatie traden. Alles daarbuiten = **NO TRADE**.
+- **Structuur:** RANGE = NO TRADE. Alleen LONGS bij BULLISH_STRUCTURE, alleen SHORTS bij BEARISH_STRUCTURE. Nooit tegen H1-structuur in.
+- **Sweep verplicht:** Geen entry zonder liquidity sweep + structure break. Geen sweep = NO TRADE.
+- **Risk:** SL boven/onder sweep; TP1 1R, TP2 2R, TP3 tegenoverliggende liquiditeit. Max 1–2 trades per sessie; geen stacking; geen re-entry zonder nieuwe sweep.
+- **Sessies:** Alleen London + NY voor entries. Geen Azië-entries; geen CPI/FOMC/high-impact.
+- **ML:** Mag alleen configs ranken, regime labelen, entries filteren — **nooit** entries forceren of baseline-regels overriden.
+
+Elke strategie- of execution-wijziging moet binnen deze principes blijven.
+
+---
+
 ## 1. Geen strategy rewrite zonder regressietest
 
 - Geen grote refactor van strategie-logica zonder dat er een regressietest bij komt die de oude output vastlegt (baseline) of guardrails (winrate, trade count, max DD) checkt.

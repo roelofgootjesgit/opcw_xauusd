@@ -49,8 +49,10 @@ opclw_xauusd/
 
 | Script | Doel |
 |--------|------|
+| **`python3 scripts/setup_venv.py`** | **Eerste keer (lokaal + VPS):** maak .venv, installeer `pip install -e ".[yfinance]"` in de venv, kopieer .env.example → .env. |
 | `./scripts/run_tests.sh` | Run alle tests (unit, integration, regression, performance). |
 | `./scripts/run_backtest.sh [config]` | Run backtest met config (default: configs/xauusd.yaml). |
+| `python scripts/run_full_test.py` | Fetch + backtest (standaard 30 dagen); optie `--report` voor tests + rapport. |
 | `python scripts/make_report.py` | Run tests + backtest, schrijf `reports/latest/REPORT.md` en `metrics.json`. |
 | `python scripts/make_report.py --baseline` | Idem + kopieer naar `reports/history/baseline.json`. |
 
@@ -86,6 +88,27 @@ oclw_bot kan op de VPS:
 
 ## VPS Runbook (kort)
 
-- **Systemd (optie):** service voor een runner-script dat periodiek `make_report.py` draait; logs naar bijv. `/var/log/opclaw/`.
-- **Cron:** dagelijks of na push: `cd /path/to/opclw_xauusd && python scripts/make_report.py`.
-- Eerste keer: zorg voor data (bijv. `oclw_bot fetch`), run backtest, daarna `make_report.py --baseline` om baseline te zetten.
+### Eerste keer op VPS: venv en installatie
+
+Alles in een venv installeren (zoals lokaal):
+
+```bash
+cd /path/to/opclw_xauusd
+python3 scripts/setup_venv.py
+source .venv/bin/activate
+```
+
+Daarna (eenmalig) data en baseline:
+
+```bash
+oclw_bot fetch --days 90
+oclw_bot backtest --config configs/xauusd.yaml
+python scripts/make_report.py --baseline
+```
+
+Bij elke `git pull` hoef je alleen de venv te activeren; dependencies zitten al in de venv. Na grote wijzigingen eventueel opnieuw: `pip install -e ".[yfinance]"` in de venv.
+
+### Draaien
+
+- **Systemd (optie):** service voor een runner-script dat periodiek `make_report.py` draait; logs naar bijv. `/var/log/opclaw/`. Gebruik de venv-Python: `/path/to/opclw_xauusd/.venv/bin/python scripts/make_report.py`.
+- **Cron:** dagelijks of na push: `cd /path/to/opclw_xauusd && .venv/bin/python scripts/make_report.py` (zodat alles in de venv draait).

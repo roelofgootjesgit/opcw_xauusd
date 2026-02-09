@@ -15,11 +15,11 @@ De **OpenClaw-bot** (oclw_bot) draait op de VPS, voert tests uit en past paramet
 
 ## 2. Waar draait de bot?
 
-- **Omgeving:** VPS (bijv. systemd-service of cron).
-- **Projectroot:** `projects/openclaw-dev/` (of jouw clone).
+- **Omgeving:** VPS (bijv. systemd-service of cron); lokaal: **venv aanbevolen** (zie RUN.md).
+- **Projectroot:** `projects/openclaw-dev/` (of jouw clone). Altijd eerst `cd` naar die map.
 - **Relevante mappen:** `configs/`, `scripts/`, `reports/`, `tests/`.
 
-Zorg dat op de VPS o.a. beschikbaar zijn: Python, `pytest`, project-dependencies (`pip install -e .` of `requirements.txt`), en eventueel market data voor de backtest.
+Zorg dat op de VPS o.a. beschikbaar zijn: Python, `pytest`, project-dependencies (`pip install -e .` of `requirements.txt`), en eventueel market data voor de backtest. Lokaal: gebruik een **venv** (`python -m venv .venv` → activeren → `pip install -e .`).
 
 ---
 
@@ -135,8 +135,8 @@ Zie ook `oclw_bot/rules.md` voor de volledige regels.
 
 ### 5.3 Eerste keer
 
-1. Data beschikbaar maken (indien van toepassing, bijv. `oclw_bot fetch` of handmatig).
-2. `./scripts/run_tests.sh` en `./scripts/run_backtest.sh` controleren.
+1. **Data:** `pip install yfinance` en daarna `oclw_bot fetch` (Yahoo Finance → Parquet in `data/market_cache/`). Zie ook **RUN.md** (“Professioneel: bot testen op echte data”).
+2. `./scripts/run_tests.sh` en `./scripts/run_backtest.sh` (of `oclw_bot backtest`) controleren.
 3. `python scripts/make_report.py --baseline` om de baseline te zetten.
 
 ---

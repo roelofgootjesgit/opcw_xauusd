@@ -7,9 +7,10 @@ timeframes:
 
 backtest:
   default_period_days: 90
-  tp_r: 2.0
+  tp_r: 1.5   # lager dan 2.0: TP dichterbij → vaker geraakt → hogere winrate (kleinere winst per trade)
   sl_r: 1.0
-  session_filter: null  # or Tokyo, London, NY
+  # OCLW_PRINCIPLES: alleen London + NY voor entries; Asia = range-detectie, no entry
+  session_filter: null  # future: [London, New York]
 
 risk:
   max_position_pct: 0.015
@@ -17,4 +18,39 @@ risk:
 
 strategy:
   name: sqe_xauusd
-  # SQE / ICT params can go here
+  # ---- 3 pillars (tp_r 1.5 voor hogere winrate, liquidity OR voor voldoende trades) ----
+  trend_context:
+    modules: [market_structure_shift, displacement]
+    require_all: false  # OR: structure OF momentum
+  liquidity_levels:
+    modules: [liquidity_sweep, fair_value_gaps]
+    require_all: false  # OR: sweep OF FVG (AND gaf 0 trades)
+  entry_trigger:
+    module: displacement
+  # Module params (losser dan code-defaults)
+  liquidity_sweep:
+    lookback_candles: 20
+    sweep_threshold_pct: 0.15  # was 0.2: kleinere sweep telt mee
+    reversal_candles: 4         # was 3: iets meer tijd voor reversal
+  displacement:
+    min_body_pct: 60   # was 70: iets kleinere body ok
+    min_candles: 2     # was 3: 2 sterke candles volstaan
+    min_move_pct: 1.0  # was 1.5: kleinere move ok
+  fair_value_gaps:
+    min_gap_pct: 0.3   # was 0.5: kleinere gap telt
+    validity_candles: 80  # was 50: FVG langer "geldig"
+  market_structure_shift:
+    swing_lookback: 5
+    break_threshold_pct: 0.15  # was 0.2: lichtere break telt
+  # Alleen trades in expliciete structuur (HH/HL of LH/LL); RANGE blokkeren → betere PnL/DD
+  require_structure: true
+  # H1-structuurgate: true = ook H1 moet bullish zijn (streng), false = alleen M15 (meer trades)
+  structure_use_h1_gate: false
+  # Stap 2: entry alleen bij sweep + displacement + FVG (liquidity = target, niet entry)
+  entry_require_sweep_displacement_fvg: true
+  # Binnen N bars: min_count van 3 (sweep+disp+fvg), 2 = soepeler (2 van 3)
+  entry_sweep_disp_fvg_lookback_bars: 5
+  entry_sweep_disp_fvg_min_count: 2
+  structure_context:
+    lookback: 30   # bars om swing highs/lows te bepalen
+    pivot_bars: 2  # lokaal max/min over 2*N+1 bars
