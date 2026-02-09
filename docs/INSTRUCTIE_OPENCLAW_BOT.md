@@ -16,7 +16,7 @@ De **OpenClaw-bot** (oclw_bot) draait op de VPS, voert tests uit en past paramet
 ## 2. Waar draait de bot?
 
 - **Omgeving:** VPS (bijv. systemd-service of cron).
-- **Projectroot:** `opclw_xauusd/` (of jouw clone).
+- **Projectroot:** `projects/openclaw-dev/` (of jouw clone).
 - **Relevante mappen:** `configs/`, `scripts/`, `reports/`, `tests/`.
 
 Zorg dat op de VPS o.a. beschikbaar zijn: Python, `pytest`, project-dependencies (`pip install -e .` of `requirements.txt`), en eventueel market data voor de backtest.
@@ -28,7 +28,7 @@ Zorg dat op de VPS o.a. beschikbaar zijn: Python, `pytest`, project-dependencies
 ### 3.1 Alle tests draaien
 
 ```bash
-cd /pad/naar/opclw_xauusd
+cd /pad/naar/projects/openclaw-dev
 export PYTHONPATH=.
 ./scripts/run_tests.sh
 ```
@@ -124,7 +124,7 @@ Zie ook `oclw_bot/rules.md` voor de volledige regels.
 
 ```bash
 # Dagelijks om 06:00
-0 6 * * * cd /pad/naar/opclw_xauusd && python scripts/make_report.py >> /var/log/opclaw/report.log 2>&1
+0 6 * * * cd /pad/naar/projects/openclaw-dev && python scripts/make_report.py >> /var/log/opclaw/report.log 2>&1
 ```
 
 ### 5.2 Na code/config-wijziging
