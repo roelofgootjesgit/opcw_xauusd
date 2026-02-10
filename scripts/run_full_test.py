@@ -25,6 +25,7 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Optional, Tuple
 
 
 def project_root() -> Path:
@@ -61,7 +62,7 @@ def _ensure_deps_and_venv() -> None:
     sys.exit(1)
 
 
-def setup_logging_from_config(root: Path, config_path: str) -> tuple[logging.Logger, Path | None]:
+def setup_logging_from_config(root: Path, config_path: str) -> Tuple[logging.Logger, Optional[Path]]:
     """Load config and setup logging (console + file). Returns (logger, run_log_path for this run)."""
     sys.path.insert(0, str(root))
     from src.trader.config import load_config

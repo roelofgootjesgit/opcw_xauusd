@@ -88,7 +88,12 @@ def main() -> None:
     history_dir.mkdir(parents=True, exist_ok=True)
 
     run_id = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    ts_log = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M-%S")  # same as oclw_bot_<ts>.log
     git_commit = get_git_commit()
+    logs_dir = root / "logs"
+    json_dir = root / "logs" / "json"
+    logs_dir.mkdir(parents=True, exist_ok=True)
+    json_dir.mkdir(parents=True, exist_ok=True)
 
     # 1) Run tests
     passed, failed, test_output = run_pytest()
@@ -124,11 +129,13 @@ def main() -> None:
         },
     }
 
-    # 3) Write metrics.json
+    # 3) Write metrics.json (reports/latest) and logs/json/ for data collection
     (latest_dir / "metrics.json").write_text(
         json.dumps(metrics_payload, indent=2, default=str),
         encoding="utf-8",
     )
+    json_path = json_dir / f"run_{ts_log}.json"
+    json_path.write_text(json.dumps(metrics_payload, indent=2, default=str), encoding="utf-8")
     if args.baseline:
         (history_dir / "baseline.json").write_text(
             json.dumps(metrics_payload, indent=2, default=str),
@@ -136,7 +143,7 @@ def main() -> None:
         )
         print(f"[make_report] Baseline saved to reports/history/baseline.json")
 
-    # 4) Write REPORT.md
+    # 4) Write REPORT.md (reports/latest) and report as .log (logs/)
     status = "PASS" if tests_ok and kpis.get("error") is None else "FAIL"
     md_lines = [
         "# oclw_bot Report",
@@ -171,7 +178,11 @@ def main() -> None:
         "",
     ]
     (latest_dir / "REPORT.md").write_text("\n".join(md_lines), encoding="utf-8")
-    print(f"[make_report] Report written to reports/latest/REPORT.md and metrics.json")
+    log_path = logs_dir / f"oclw_bot_{ts_log}.log"
+    log_path.write_text("\n".join(md_lines), encoding="utf-8")
+    print(f"[make_report] Report: {log_path}")
+    print(f"[make_report] Data:   {json_path}")
+    print(f"[make_report] Also: reports/latest/REPORT.md and metrics.json")
     if not tests_ok:
         sys.exit(1)
 

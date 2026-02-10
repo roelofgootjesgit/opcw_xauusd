@@ -7,18 +7,19 @@ name = "oclw_bot"
 version = "0.1.0"
 description = "oclw_bot – ICT-style backtest and execution framework (XAUUSD)"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 dependencies = [
     "pandas>=2.0",
     "numpy>=1.24",
     "pyyaml>=6.0",
-    "pyarrow>=10.0",
+    "pyarrow>=12.0",
     "python-dotenv>=1.0",
 ]
 
 [project.optional-dependencies]
 dev = ["pytest>=7.0", "pytest-cov"]
 yfinance = ["yfinance>=0.2"]
+telegram = ["python-telegram-bot>=20"]
 
 [project.scripts]
 oclw_bot = "src.trader.app:main"
