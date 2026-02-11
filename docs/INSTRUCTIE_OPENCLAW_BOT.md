@@ -16,10 +16,10 @@ De **OpenClaw-bot** (oclw_bot) draait op de VPS, voert tests uit en past paramet
 ## 2. Waar draait de bot?
 
 - **Omgeving:** VPS (bijv. systemd-service of cron); lokaal: **venv aanbevolen** (zie RUN.md).
-- **Projectroot:** `projects/openclaw-dev/` (of jouw clone). Altijd eerst `cd` naar die map.
-- **Relevante mappen:** `configs/`, `scripts/`, `reports/`, `tests/`.
+- **Projectroot:** `opclw_xauusd/` (of jouw clone). Altijd eerst `cd` naar die map.
+- **Relevante mappen:** `configs/`, `scripts/`, `reports/`, `tests/`, `logs/`, `oclw_bot/`.
 
-Zorg dat op de VPS o.a. beschikbaar zijn: Python, `pytest`, project-dependencies (`pip install -e .` of `requirements.txt`), en eventueel market data voor de backtest. Lokaal: gebruik een **venv** (`python -m venv .venv` → activeren → `pip install -e .`).
+Zorg dat op de VPS o.a. beschikbaar zijn: Python 3.10+, `pytest`, project-dependencies. **Aanbevolen:** `python scripts/setup_venv.py` (maakt .venv, installeert `pip install -e ".[yfinance]"` in venv). Daarna venv activeren en eventueel market data: `oclw_bot fetch`.
 
 ---
 
@@ -28,8 +28,8 @@ Zorg dat op de VPS o.a. beschikbaar zijn: Python, `pytest`, project-dependencies
 ### 3.1 Alle tests draaien
 
 ```bash
-cd /pad/naar/projects/openclaw-dev
-export PYTHONPATH=.
+cd /pad/naar/opclw_xauusd
+source .venv/bin/activate   # of op Windows: .\.venv\Scripts\Activate.ps1
 ./scripts/run_tests.sh
 ```
 
@@ -123,8 +123,8 @@ Zie ook `oclw_bot/rules.md` voor de volledige regels.
 ### 5.1 Periodiek rapport (bijv. cron)
 
 ```bash
-# Dagelijks om 06:00
-0 6 * * * cd /pad/naar/projects/openclaw-dev && python scripts/make_report.py >> /var/log/opclaw/report.log 2>&1
+# Dagelijks om 06:00 (gebruik venv-Python)
+0 6 * * * cd /pad/naar/opclw_xauusd && .venv/bin/python scripts/make_report.py >> /var/log/opclaw/report.log 2>&1
 ```
 
 ### 5.2 Na code/config-wijziging

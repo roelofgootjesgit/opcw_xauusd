@@ -1,5 +1,7 @@
 # Hoe we de settings bepalen
 
+**Feb 2026.** Voor huidige fase → **docs/PROJECT_STATUS_GPT.md**.
+
 Eén idee: **alle instellingen op één plek, bepalen door meten (backtest + guardrails), nooit door gok of ML-override.**
 
 ---

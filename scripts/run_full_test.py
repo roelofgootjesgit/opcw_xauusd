@@ -99,8 +99,19 @@ def check_env(log: logging.Logger) -> bool:
     return ok
 
 
+# Secties uit config die we per run bewaren voor ML (geen paden/env)
+_SETTINGS_KEYS = ("symbol", "timeframes", "backtest", "risk", "strategy")
+
+
+def _settings_snapshot(cfg: dict) -> dict:
+    """Extract ML-relevant settings from merged config (whitelist)."""
+    return {k: cfg[k] for k in _SETTINGS_KEYS if k in cfg}
+
+
 def write_run_json(root: Path, run_log_path: Path | None, args: argparse.Namespace, log: logging.Logger) -> None:
-    """Write per-run JSON (ML-friendly) next to the .log file. .log = human, .json = ML."""
+    """Write per-run JSON (ML-friendly) next to the .log file. .log = human, .json = ML.
+    Includes full settings snapshot so we can build datasets to compare trade settings across runs/timeframes.
+    """
     if not run_log_path:
         return
     run_dir = run_log_path.parent
@@ -112,11 +123,22 @@ def write_run_json(root: Path, run_log_path: Path | None, args: argparse.Namespa
     time_part = "_".join(parts[2:]) if len(parts) >= 3 else datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M-%S")
     json_path = json_dir / f"run_{time_part}.json"
 
+    # Load config once for settings snapshot and optional backtest
+    sys.path.insert(0, str(root))
+    from src.trader.config import load_config
+    cfg = load_config(args.config)
+    cfg.setdefault("backtest", {})["default_period_days"] = args.days  # effective period for this run
+    settings = _settings_snapshot(cfg)
+
     payload = {
         "run_id": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "config_path": args.config,
+        "config": args.config,  # backwards compatibility
         "days": args.days,
-        "config": args.config,
+        "timeframes": cfg.get("timeframes"),
+        "symbol": cfg.get("symbol"),
         "report_run": args.report,
+        "settings": settings,
     }
     # Prefer metrics from report if available
     metrics_file = root / "reports" / "latest" / "metrics.json"
@@ -131,12 +153,8 @@ def write_run_json(root: Path, run_log_path: Path | None, args: argparse.Namespa
     else:
         # Run backtest in-process to get KPIs for this run
         try:
-            sys.path.insert(0, str(root))
-            from src.trader.config import load_config
             from src.trader.backtest.engine import run_backtest
             from src.trader.backtest.metrics import compute_metrics
-            cfg = load_config(args.config)
-            cfg.setdefault("backtest", {})["default_period_days"] = args.days
             trades = run_backtest(cfg)
             payload["kpis"] = dict(compute_metrics(trades))
             payload["tests"] = {}

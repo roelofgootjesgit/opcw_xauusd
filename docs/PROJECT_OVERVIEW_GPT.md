@@ -1,5 +1,7 @@
 # oclw_xauusd — Project Overview (helicopter view voor GPT)
 
+**Laatst bijgewerkt:** Feb 2026. Voor **huidige fase, wat er is gebouwd en hoe ermee te werken** → **docs/PROJECT_STATUS_GPT.md**.
+
 Dit document geeft een overzicht van het project en **het verschil tussen lokaal werken en VPS**. Doel: lokaal testen, daarna pas pushen/pullen naar de VPS.
 
 ---
@@ -13,14 +15,16 @@ Dit document geeft een overzicht van het project en **het verschil tussen lokaal
 
 **Belangrijke mappen:**
 - `configs/` — default.yaml, xauusd.yaml  
-- `src/trader/` — app, config, backtest-engine, strategies, execution, indicators, strategy_modules/ict  
+- `src/trader/` — app, config, backtest-engine, strategies, execution, indicators, strategy_modules/ict, **ml/**  
 - `data/` — market_cache (Parquet), signals  
 - `tests/` — unit, integration, regression, performance  
 - `reports/latest/` — REPORT.md, metrics.json (per run)  
 - `reports/history/` — baseline.json (gouden KPI-referentie)  
-- `scripts/` — run_tests.sh, run_backtest.sh, make_report.py  
+- `logs/` — oclw_bot_<ts>.log (mens), **logs/json/** — run_<ts>.json (ML)  
+- `artifacts/` — optioneel run_<ts>/ (metrics, report, equity) voor Telegram/OpenClaw  
+- `scripts/` — setup_venv.py, run_full_test.py, run_tests.sh, run_backtest.sh, make_report.py, run_backtest_to_artifacts.py, telegram_listener.py  
 - `oclw_bot/` — rules.md, prompts (tester.md, improver.md) voor de Test → Report → Improve-loop  
-- `docs/` — ARCHITECTURE.md, TODO.md, VPS_LOOP.md, deze overview  
+- `docs/` — PROJECT_STATUS_GPT.md (huidige fase), ARCHITECTURE.md, TODO.md, VPS_LOOP.md, deze overview  
 
 ---
 
@@ -83,11 +87,14 @@ Dit document geeft een overzicht van het project en **het verschil tussen lokaal
 | Script | Gebruik |
 |--------|--------|
 | **`python scripts/setup_venv.py`** | **Eerste keer (lokaal + VPS):** .venv aanmaken, alles in venv installeren (incl. yfinance), .env aanmaken. |
-| **`python scripts/run_full_test.py`** | **Standaard alles-in-één:** check env, fetch Yahoo-data, backtest (default 30 dagen). Optioneel `--report` voor tests + REPORT.md. |
+| **`python scripts/run_full_test.py`** | **Standaard alles-in-één:** check env, fetch Yahoo-data, backtest (default 30 dagen). Optioneel `--report` voor tests + REPORT.md; `--skip-fetch` voor alleen backtest. |
 | `./scripts/run_tests.sh` | Alle tests (unit, integration, regression, performance). |
-| `./scripts/run_backtest.sh [config]` | Backtest (default: configs/xauusd.yaml). |
+| `./scripts/run_backtest.sh [config] [--out dir]` | Backtest (default: configs/xauusd.yaml). Met `--out` ook artifacts (metrics, report, equity). |
+| `python scripts/run_backtest_to_artifacts.py` | Backtest → artifacts/run_<ts>/ (voor Telegram/OpenClaw). |
 | `python scripts/make_report.py` | Tests + backtest → `reports/latest/REPORT.md` + `metrics.json`. |
 | `python scripts/make_report.py --baseline` | Zelfde + kopie naar `reports/history/baseline.json`. |
+| `python scripts/telegram_listener.py` | Telegram gateway: RUN_BACKTEST → report terug (zie docs/TELEGRAM_COMMANDS.md). |
+| **`oclw_bot optimize`** | ML learning cycle(s) (config space + backtest); output o.a. in reports/latest/best_ml_config.json. |
 
 **Voorbeeld volle test (1 maand + rapport):**  
 `python scripts/run_full_test.py --days 30 --report`
@@ -140,15 +147,18 @@ python scripts/make_report.py
 
 ## Documentatie in repo
 
+- **docs/PROJECT_STATUS_GPT.md** — **Start hier voor GPT:** huidige fase, wat gebouwd, hoe werken.  
 - **README.md** — projectintro, structuur, quick start.  
-- **RUN.md** — setup, venv, Yahoo/fetch, CLI-modes, tests, config.  
+- **RUN.md** — setup, venv, Yahoo/fetch, CLI (backtest, fetch, optimize), tests, config.  
 - **docs/OCLW_PRINCIPLES.md** — canonieke regels (5 stappen, risk, sessies, wat nooit mag).  
 - **docs/STRATEGY_BASIS.md** — 3 pijlers + mapping naar 5 stappen, roadmap.  
 - **docs/SETTINGS.md** — waar settings staan (YAML + code) en hoe we ze bepalen (backtest, baseline, guardrails).  
 - **docs/WERKWIJZE.md** — werkwijze: test draaien → rapport → vergelijken met baseline → beslissen → eventueel push/VPS.
 - **docs/ARCHITECTURE.md** — data flow, uitbreiden (ICT-modules, strategies, broker).  
 - **docs/VPS_LOOP.md** — VPS runbook, DoD, scripts, rapportformaat.  
+- **docs/ARTIFACTS_SCHEMA.md** — logs/, logs/json/, artifacts/ layout.  
+- **docs/TELEGRAM_COMMANDS.md** — Telegram RUN_BACKTEST, setup.  
 - **docs/TODO.md** — open taken.  
 - **docs/PROJECT_OVERVIEW_GPT.md** — dit bestand (helicopter view + local vs VPS).
 
-Als je dit bestand in GPT plakt, heeft het voldoende context om het project en het verschil tussen lokaal testen en VPS te begrijpen.
+Als je **PROJECT_STATUS_GPT.md** en dit bestand in GPT plakt, heeft het voldoende context om het project, de huidige fase en het verschil tussen lokaal testen en VPS te begrijpen.

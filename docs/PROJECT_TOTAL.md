@@ -1,5 +1,7 @@
 # oclw_xauusd — Totaal projectoverzicht
 
+**Laatst bijgewerkt:** Feb 2026. Voor **huidige fase en hoe ermee te werken** → **docs/PROJECT_STATUS_GPT.md**.
+
 Eén document met: wat het project is, hoe de VPS door OpenClaw wordt bestuurd, en wat we (gaan) bouwen op het gebied van ML.
 
 ---
@@ -11,7 +13,7 @@ Eén document met: wat het project is, hoe de VPS door OpenClaw wordt bestuurd, 
 - **Data:** Parquet in `data/market_cache/SYMBOL/`; fetch via Yahoo Finance (GC=F) of eigen data.
 - **Strategie:** SQE-style (liquidity sweep + displacement + FVG ± market structure shift), gebouwd uit modulaire ICT-modules (sweep, FVG, order blocks, breaker blocks, imbalance zones, MSS).
 - **Pipeline:** Config (YAML + .env) → load data → indicators (ATR, EMA, swings) → strategy modules → entries → backtest (TP/SL in R) → metrics & report.
-- **Tech:** Python 3.10+, CLI `oclw_bot` (backtest, fetch), tests (unit, integration, regression, performance).
+- **Tech:** Python 3.10+, CLI `oclw_bot` (backtest, fetch, **optimize**), tests (unit, integration, regression, performance). Logs: .log (mens) + **logs/json/** (ML); optioneel **artifacts/run_<ts>/** voor Telegram/OpenClaw.
 
 **Belangrijke mappen:**
 
@@ -23,9 +25,11 @@ Eén document met: wat het project is, hoe de VPS door OpenClaw wordt bestuurd, 
 | `tests/` | unit, integration, regression, performance, smoke |
 | `reports/latest/` | REPORT.md, metrics.json (per run) |
 | `reports/history/` | baseline.json (gouden KPI-referentie) |
-| `scripts/` | run_tests.sh, run_backtest.sh, make_report.py |
+| `scripts/` | setup_venv.py, run_full_test.py, run_tests.sh, run_backtest.sh, make_report.py, run_backtest_to_artifacts.py, telegram_listener.py |
 | `oclw_bot/` | rules.md, prompts (tester.md, improver.md) — **VPS-agents** |
-| `docs/` | ARCHITECTURE, VPS_LOOP, TODO, INSTRUCTIE_OPENCLAW_BOT, PROJECT_OVERVIEW_GPT, **PROJECT_TOTAL** (dit bestand) |
+| `logs/` | oclw_bot_<ts>.log; **logs/json/** run_<ts>.json |
+| `artifacts/` | optioneel run_<ts>/ (metrics, report, equity) |
+| `docs/` | PROJECT_STATUS_GPT (fase + hoe werken), ARCHITECTURE, VPS_LOOP, TODO, INSTRUCTIE_OPENCLAW_BOT, PROJECT_OVERVIEW_GPT, **PROJECT_TOTAL** (dit bestand) |
 
 ---
 
@@ -125,11 +129,14 @@ Dit is de richting: **bestaande ML (config space, optimizer, rewards, knowledge 
 
 | Document | Inhoud |
 |----------|--------|
+| **docs/PROJECT_STATUS_GPT.md** | **Huidige fase, wat gebouwd, hoe werken** — start voor GPT. |
 | **README.md** | Projectintro, structuur, quick start, VPS-loop in het kort. |
-| **RUN.md** | Setup, venv, Yahoo/fetch, CLI (backtest, fetch), tests, config. |
+| **RUN.md** | Setup, venv, Yahoo/fetch, CLI (backtest, fetch, optimize), tests, config. |
 | **docs/ARCHITECTURE.md** | Data flow, uitbreiden (ICT-modules, strategies, broker). |
 | **docs/VPS_LOOP.md** | VPS runbook, scripts, rapportformaat, DoD. |
 | **docs/INSTRUCTIE_OPENCLAW_BOT.md** | OpenClaw op de VPS: tests, rapport, waarden aanpassen, guardrails, automatisering. |
+| **docs/ARTIFACTS_SCHEMA.md** | logs/, logs/json/, artifacts/ layout. |
+| **docs/TELEGRAM_COMMANDS.md** | Telegram RUN_BACKTEST, setup. |
 | **docs/TODO.md** | Open taken (MT5/Oanda, session filter, short SQE, HTML/PDF report, extra tests). |
 | **docs/PROJECT_OVERVIEW_GPT.md** | Helicopter view + local vs VPS voor gebruik in GPT. |
 | **docs/PROJECT_TOTAL.md** | **Dit document:** totaaloverzicht, VPS-besturing door OpenClaw, ML (huidig + roadmap). |
@@ -142,11 +149,10 @@ Dit is de richting: **bestaande ML (config space, optimizer, rewards, knowledge 
 ## 6. Snelle referentie: belangrijke commando’s
 
 ```bash
-# Setup
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -e ".[yfinance]"
-cp .env.example .env
+# Setup (aanbevolen: één commando)
+python scripts/setup_venv.py
+.\.venv\Scripts\Activate.ps1   # Windows
+source .venv/bin/activate      # Linux/VPS
 
 # Data
 oclw_bot fetch
@@ -154,12 +160,16 @@ oclw_bot fetch --days 90
 
 # Run
 oclw_bot backtest --config configs/xauusd.yaml
+python scripts/run_full_test.py --days 30 --report
 pytest tests/ -v --tb=short
 python scripts/make_report.py
 python scripts/make_report.py --baseline
+
+# ML (lokaal/experimenteel)
+oclw_bot optimize --cycles 1 --candidates 5
 
 # VPS (na pull)
 python scripts/make_report.py
 ```
 
-Met dit document heb je één plek voor het totale plaatje: project, VPS-besturing door OpenClaw, en wat er is en komt op het gebied van ML.
+Met dit document heb je één plek voor het totale plaatje: project, VPS-besturing door OpenClaw, en wat er is en komt op het gebied van ML. Voor actuele status en werkwijze: **docs/PROJECT_STATUS_GPT.md**.

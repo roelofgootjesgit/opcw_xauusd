@@ -1,5 +1,7 @@
 # SQE XAUUSD – Strategie basis
 
+**Feb 2026.** Voor huidige fase en config-overzicht → **docs/PROJECT_STATUS_GPT.md**.
+
 **Canonieke regels:** `docs/OCLW_PRINCIPLES.md` (Meten → Wachten → Reageren; geen voorspellen/gokken).
 
 De strategie volgt de **5 stappen** uit de principes; de huidige code implementeert dit via **3 pijlers** (trend → liquiditeit/levels → entry trigger).

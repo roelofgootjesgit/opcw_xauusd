@@ -1,5 +1,7 @@
 # How to run oclw_bot
 
+**Feb 2026.** Voor actuele fase en overzicht → **docs/PROJECT_STATUS_GPT.md**.
+
 ## Setup
 
 1. **Projectmap** – ga naar de projectdirectory:
@@ -82,6 +84,10 @@ oclw_bot fetch
 # Of expliciet:
 oclw_bot fetch --symbol XAUUSD --timeframe 1h --days 90
 oclw_bot fetch -s XAUUSD -t 15m -d 60
+
+# ML-optimalisatie (learning cycle; lokaal/experimenteel)
+oclw_bot optimize
+oclw_bot optimize --cycles 2 --candidates 5
 ```
 
 Zonder geïnstalleerd script:
@@ -89,6 +95,7 @@ Zonder geïnstalleerd script:
 ```bash
 python -m src.trader.app backtest --config configs/xauusd.yaml
 python -m src.trader.app fetch
+python -m src.trader.app optimize --cycles 1
 ```
 
 ## Tests

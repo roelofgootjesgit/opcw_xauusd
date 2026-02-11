@@ -1,5 +1,7 @@
 # Telegram command set (OpenClaw gateway)
 
+**Feb 2026.** Overzicht project en scripts: **docs/PROJECT_STATUS_GPT.md**.
+
 Eerste module: **RUN_BACKTEST → report terug**. Geen Improver, geen ML.
 
 ---

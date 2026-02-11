@@ -1,5 +1,7 @@
 # Werkwijze: test draaien, en dan?
 
+**Feb 2026.** Voor volledig overzicht → **docs/PROJECT_STATUS_GPT.md**.
+
 Vaste volgorde: **test draaien → rapport bekijken → vergelijken met baseline → beslissen → eventueel pushen naar VPS.**
 
 ---

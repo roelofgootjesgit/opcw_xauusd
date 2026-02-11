@@ -1,5 +1,7 @@
 # OpenClaw: Backtest runnen en aanpassen voor betere uitkomst
 
+**Feb 2026.** Voor overzicht scripts en fase → **docs/PROJECT_STATUS_GPT.md**.
+
 Korte instructie voor de bot: hoe backtest draaien, logs vergelijken en config/strategie stapsgewijs verbeteren.
 
 ---

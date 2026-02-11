@@ -1,5 +1,7 @@
 # oclw_bot VPS: Test → Rapport → Verbeter Loop
 
+**Feb 2026.** Voor huidige fase en overzicht scripts → **docs/PROJECT_STATUS_GPT.md**.
+
 ## Doel
 
 oclw_bot draait op een VPS en doorloopt automatisch:
