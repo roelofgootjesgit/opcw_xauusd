@@ -1,0 +1,137 @@
+{
+  "run_id": "2026-02-09T20:09:18Z",
+  "git_commit": "0958d74dec94",
+  "status": "PASS",
+  "tests": {
+    "passed": 0,
+    "failed": 0
+  },
+  "kpis": {
+    "net_pnl": 58.15,
+    "profit_factor": 1.28,
+    "max_drawdown": -7.0,
+    "winrate": 0.39,
+    "win_rate_pct": 39.02,
+    "expectancy_r": 0.17,
+    "trade_count": 41,
+    "avg_holding_hours": 2.96
+  },
+  "baseline_diff": {
+    "delta_net_pnl": 58.15,
+    "delta_profit_factor": 1.28,
+    "delta_max_drawdown": -7.0,
+    "delta_winrate": 0.39,
+    "delta_win_rate_pct": 39.02,
+    "delta_expectancy_r": 0.17,
+    "delta_trade_count": 41,
+    "delta_avg_holding_hours": 2.96
+  },
+  "guardrail_flags": [],
+  "allowed_knobs": [
+    {
+      "path": "backtest.tp_r",
+      "current": 1.5,
+      "min": 1.5,
+      "max": 3.0
+    },
+    {
+      "path": "backtest.sl_r",
+      "current": 1.0,
+      "min": 0.5,
+      "max": 2.0
+    },
+    {
+      "path": "strategy.liquidity_sweep.lookback_candles",
+      "current": 20,
+      "min": 10,
+      "max": 50
+    },
+    {
+      "path": "strategy.liquidity_sweep.sweep_threshold_pct",
+      "current": 0.15,
+      "min": 0.1,
+      "max": 1.0
+    },
+    {
+      "path": "strategy.liquidity_sweep.reversal_candles",
+      "current": 4,
+      "min": 1,
+      "max": 5
+    },
+    {
+      "path": "strategy.displacement.min_body_pct",
+      "current": 60,
+      "min": 50,
+      "max": 90
+    },
+    {
+      "path": "strategy.displacement.min_candles",
+      "current": 2,
+      "min": 2,
+      "max": 5
+    },
+    {
+      "path": "strategy.displacement.min_move_pct",
+      "current": 1.0,
+      "min": 0.5,
+      "max": 3.0
+    },
+    {
+      "path": "strategy.fair_value_gaps.min_gap_pct",
+      "current": 0.3,
+      "min": 0.2,
+      "max": 1.0
+    },
+    {
+      "path": "strategy.fair_value_gaps.validity_candles",
+      "current": 80,
+      "min": 20,
+      "max": 80
+    },
+    {
+      "path": "strategy.market_structure_shift.swing_lookback",
+      "current": 5,
+      "min": 3,
+      "max": 10
+    },
+    {
+      "path": "strategy.market_structure_shift.break_threshold_pct",
+      "current": 0.15,
+      "min": 0.05,
+      "max": 0.5
+    },
+    {
+      "path": "strategy.require_structure",
+      "current": true,
+      "type": "bool"
+    },
+    {
+      "path": "strategy.structure_use_h1_gate",
+      "current": false,
+      "type": "bool"
+    },
+    {
+      "path": "strategy.entry_require_sweep_displacement_fvg",
+      "current": true,
+      "type": "bool"
+    },
+    {
+      "path": "strategy.entry_sweep_disp_fvg_lookback_bars",
+      "current": 5,
+      "min": 1,
+      "max": 10
+    },
+    {
+      "path": "strategy.entry_sweep_disp_fvg_min_count",
+      "current": 2,
+      "min": 1,
+      "max": 10
+    }
+  ],
+  "cooldown": {
+    "cooldown": false
+  },
+  "runs_today": 0,
+  "max_runs_per_day": 10,
+  "_instructions": "You are the Improver-Agent. Respond ONLY with the JSON decision format. Do NOT read any other files. Do NOT explore the codebase. If cooldown is true, respond with decision=STOP. If guardrail_flags is empty and status=PASS, respond with decision=ACCEPT. If you propose changes, use ONLY paths from allowed_knobs."
+}

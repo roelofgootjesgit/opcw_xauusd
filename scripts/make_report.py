@@ -183,6 +183,18 @@ def main() -> None:
     print(f"[make_report] Report: {log_path}")
     print(f"[make_report] Data:   {json_path}")
     print(f"[make_report] Also: reports/latest/REPORT.md and metrics.json")
+
+    # 5) Generate compact LLM input (for OpenClaw/Claude)
+    try:
+        llm_script = root / "scripts" / "make_llm_input.py"
+        if llm_script.exists():
+            llm_args = [sys.executable, str(llm_script)]
+            if args.config:
+                llm_args.extend(["--config", args.config])
+            subprocess.run(llm_args, cwd=root, timeout=30)
+    except Exception as e:
+        print(f"[make_report] WARNING: llm_input generation failed: {e}")
+
     if not tests_ok:
         sys.exit(1)
 
