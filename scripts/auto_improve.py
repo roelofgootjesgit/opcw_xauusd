@@ -393,6 +393,72 @@ class LLMDecider:
 
 
 # ---------------------------------------------------------------------------
+# Telegram notifications (via OpenClaw)
+# ---------------------------------------------------------------------------
+
+def send_telegram(message: str, target: str = "") -> bool:
+    """Send a Telegram message via OpenClaw CLI. Returns True if successful."""
+    cmd = ["openclaw", "message", "send", "--channel", "telegram", "--message", message]
+    if target:
+        cmd.extend(["--target", target])
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=30, cwd=ROOT)
+        if r.returncode != 0:
+            log.warning("Telegram send failed: %s", (r.stderr or r.stdout)[:200])
+            return False
+        return True
+    except Exception as e:
+        log.warning("Telegram send error: %s", e)
+        return False
+
+
+def format_telegram_message(
+    iteration: int,
+    kpis: dict,
+    decision: dict,
+    mode: str,
+    final: bool = False,
+) -> str:
+    """Format a compact Telegram notification."""
+    emoji = {
+        "ACCEPT": "✅",
+        "PROPOSE_CHANGE": "🔧",
+        "STOP": "🛑",
+        "REJECT": "❌",
+    }
+    dec = decision["decision"]
+    icon = emoji.get(dec, "❓")
+
+    lines = [
+        f"{icon} *XAUUSD auto\\_improve* \\(iter {iteration}, {mode}\\)",
+        "",
+        f"PF={kpis.get('profit_factor', 0):.2f} | "
+        f"WR={kpis.get('win_rate_pct', 0):.1f}% | "
+        f"DD={kpis.get('max_drawdown', 0):.1f}R | "
+        f"Trades={kpis.get('trade_count', 0)}",
+        "",
+        f"Decision: *{dec}*",
+    ]
+
+    flags = decision.get("reason_codes", [])
+    if flags:
+        lines.append(f"Flags: {', '.join(flags)}")
+
+    changes = decision.get("changes", [])
+    for c in changes:
+        lines.append(f"  {c['path']}: {c.get('from')} → {c['to']}")
+
+    if decision.get("notes"):
+        lines.append(f"_{decision['notes'][:100]}_")
+
+    if final:
+        lines.append("")
+        lines.append("Loop afgerond\\.")
+
+    return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
 # Main loop
 # ---------------------------------------------------------------------------
 
@@ -453,6 +519,10 @@ def main() -> int:
     ap.add_argument("--llm-agent", default="main", help="OpenClaw agent id (default: main)")
     ap.add_argument("--skip-first-test", action="store_true",
                      help="Skip first test run (use existing llm_input.json)")
+    ap.add_argument("--telegram", action="store_true",
+                     help="Send Telegram notifications via OpenClaw after each decision")
+    ap.add_argument("--telegram-target", default="",
+                     help="Telegram target (chat id or @channel). Empty = default from OpenClaw config")
     args = ap.parse_args()
 
     # Select decider
@@ -516,6 +586,13 @@ def main() -> int:
         for c in decision.get("changes", []):
             log.info("  Change: %s: %s -> %s", c["path"], c.get("from"), c["to"])
 
+        # Telegram notification
+        mode = "LLM" if args.use_llm else "rules"
+        if args.telegram:
+            is_final = decision["decision"] in ("ACCEPT", "STOP", "REJECT")
+            msg = format_telegram_message(iteration, kpis, decision, mode, final=is_final)
+            send_telegram(msg, args.telegram_target)
+
         # Step 4: Apply
         if decision["decision"] in ("ACCEPT", "STOP", "REJECT"):
             log.info("Loop finished: %s", decision["decision"])
@@ -544,9 +621,55 @@ def main() -> int:
             log.info("DRY RUN: would apply changes above, stopping")
             return 0
 
+    # Final Telegram: max iterations reached
+    if args.telegram:
+        msg = format_telegram_message(args.max_iter, kpis, decision, mode, final=True)
+        send_telegram(msg + "\n\nMax iteraties bereikt\\.", args.telegram_target)
+
     log.info("Max iterations reached (%d)", args.max_iter)
     return 0
 
 
+def install_cron() -> None:
+    """Install daily cron job for auto_improve. Run: python scripts/auto_improve.py --install-cron"""
+    venv_python = ROOT / ".venv310" / "bin" / "python"
+    if not venv_python.exists():
+        venv_python = ROOT / ".venv" / "bin" / "python"
+    script = ROOT / "scripts" / "auto_improve.py"
+    log_file = "/var/log/opclaw/auto_improve.log"
+
+    cron_line = (
+        f"0 6 * * * cd {ROOT} && {venv_python} {script} "
+        f"--max-iter 3 --days 30 --use-llm --telegram "
+        f">> {log_file} 2>&1"
+    )
+
+    # Read existing crontab
+    r = subprocess.run(["crontab", "-l"], capture_output=True, text=True)
+    existing = r.stdout if r.returncode == 0 else ""
+
+    if "auto_improve" in existing:
+        print("[cron] auto_improve already in crontab. Current entry:")
+        for line in existing.split("\n"):
+            if "auto_improve" in line:
+                print(f"  {line}")
+        print("[cron] To replace, first remove: crontab -e")
+        return
+
+    new_crontab = existing.rstrip("\n") + "\n" + cron_line + "\n"
+    p = subprocess.run(["crontab", "-"], input=new_crontab, text=True)
+    if p.returncode == 0:
+        print(f"[cron] Installed daily cron (06:00 UTC):")
+        print(f"  {cron_line}")
+        # Ensure log dir exists
+        Path("/var/log/opclaw").mkdir(parents=True, exist_ok=True)
+        print(f"[cron] Log: {log_file}")
+    else:
+        print("[cron] Failed to install crontab", file=sys.stderr)
+
+
 if __name__ == "__main__":
-    sys.exit(main())
+    if "--install-cron" in sys.argv:
+        install_cron()
+    else:
+        sys.exit(main())
