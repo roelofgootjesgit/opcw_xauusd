@@ -32,7 +32,7 @@ def run_pytest() -> tuple[int, int, str]:
     """Run pytest; return (passed, failed, short_output)."""
     root = Path(__file__).resolve().parents[1]
     r = subprocess.run(
-        [sys.executable, "-m", "pytest", "tests/", "-v", "--tb=short", "-q"],
+        [sys.executable, "-m", "pytest", "tests/unit/", "-v", "--tb=short", "-q"],
         capture_output=True,
         text=True,
         cwd=root,

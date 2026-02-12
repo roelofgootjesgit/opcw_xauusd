@@ -7,6 +7,8 @@ def test_config_load_and_backtest_engine_import():
     from src.trader.backtest.engine import run_backtest
     cfg = load_config()
     assert "symbol" in cfg or "data" in cfg
+    # Korte periode zodat test niet hangt op trage VPS
+    cfg.setdefault("backtest", {})["default_period_days"] = 7
     trades = run_backtest(cfg)
     assert isinstance(trades, list)
 
