@@ -64,7 +64,8 @@ def run_backtest(cfg: Dict[str, Any]) -> List[Trade]:
             struct_cfg = sqe_cfg.get("structure_context", {"lookback": 30, "pivot_bars": 2})
             data_1h = add_structure_context(data_1h, struct_cfg)
             h1_bullish = data_1h["in_bullish_structure"].reindex(data.index, method="ffill")
-            long_entries = long_entries & h1_bullish.fillna(False)
+            h1_bullish = h1_bullish.infer_objects(copy=False).fillna(False)
+            long_entries = long_entries & h1_bullish
             logger.info("Entry bars (na H1-gate): %d", int(long_entries.sum()))
         else:
             logger.info("H1-gate aan maar geen 1h-data; M15-only")

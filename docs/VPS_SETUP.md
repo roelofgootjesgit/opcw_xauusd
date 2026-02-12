@@ -152,3 +152,46 @@ git fetch origin && git reset --hard origin/main
 rm -rf .venv310
 ./scripts/vps_run.sh
 ```
+
+---
+
+## Git push vanaf VPS instellen
+
+Standaard kan de VPS alleen pullen. Om ook te pushen (bv. config-wijzigingen na optimalisatie):
+
+### Optie A: SSH key (aanbevolen)
+
+```bash
+# 1. Genereer SSH key op VPS (eenmalig)
+ssh-keygen -t ed25519 -C "vps-opcw" -f ~/.ssh/id_ed25519 -N ""
+
+# 2. Toon de public key
+cat ~/.ssh/id_ed25519.pub
+
+# 3. Kopieer de output en voeg toe op GitHub:
+#    GitHub → Settings → SSH and GPG keys → New SSH key
+
+# 4. Wijzig remote URL naar SSH
+cd /root/projects/opcw_xauusd
+git remote set-url origin git@github.com:roelofgootjesgit/opcw_xauusd.git
+
+# 5. Test
+ssh -T git@github.com
+git push
+```
+
+### Optie B: Personal Access Token (snel maar minder veilig)
+
+```bash
+# 1. Maak token aan op GitHub:
+#    GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens
+#    Rechten: Contents (read/write)
+
+# 2. Stel remote URL in met token
+git remote set-url origin https://<USERNAME>:<TOKEN>@github.com/roelofgootjesgit/opcw_xauusd.git
+
+# 3. Test
+git push
+```
+
+**Let op:** bij Optie B staat je token in plain text in `.git/config`. Gebruik Optie A voor productie.
