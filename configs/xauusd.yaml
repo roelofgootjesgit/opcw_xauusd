@@ -7,7 +7,7 @@ timeframes:
 
 backtest:
   default_period_days: 90
-  tp_r: 1.5   # lager dan 2.0: TP dichterbij → vaker geraakt → hogere winrate (kleinere winst per trade)
+  tp_r: 2.5   # verhoogd van 1.5: betere R:R bij 33% winrate (breakeven ~1.86R)
   sl_r: 1.0
   # OCLW_PRINCIPLES: alleen London + NY voor entries; Asia = range-detectie, no entry
   session_filter: null  # future: [London, New York]
@@ -18,7 +18,7 @@ risk:
 
 strategy:
   name: sqe_xauusd
-  # ---- 3 pillars (tp_r 1.5 voor hogere winrate, liquidity OR voor voldoende trades) ----
+  # ---- 3 pillars (tp_r 2.5 voor betere R:R, liquidity OR voor voldoende trades) ----
   trend_context:
     modules: [market_structure_shift, displacement]
     require_all: false  # OR: structure OF momentum
@@ -35,7 +35,7 @@ strategy:
   displacement:
     min_body_pct: 60   # was 70: iets kleinere body ok
     min_candles: 2     # was 3: 2 sterke candles volstaan
-    min_move_pct: 1.0  # was 1.5: kleinere move ok
+    min_move_pct: 1.5  # verhoogd van 1.0: filtert zwakke displacements
   fair_value_gaps:
     min_gap_pct: 0.3   # was 0.5: kleinere gap telt
     validity_candles: 80  # was 50: FVG langer "geldig"
@@ -45,7 +45,7 @@ strategy:
   # Alleen trades in expliciete structuur (HH/HL of LH/LL); RANGE blokkeren → betere PnL/DD
   require_structure: true
   # H1-structuurgate: true = ook H1 moet bullish zijn (streng), false = alleen M15 (meer trades)
-  structure_use_h1_gate: false
+  structure_use_h1_gate: true   # aan: filtert counter-trend entries via H1
   # Stap 2: entry alleen bij sweep + displacement + FVG (liquidity = target, niet entry)
   entry_require_sweep_displacement_fvg: true
   # Binnen N bars: min_count van 3 (sweep+disp+fvg), 2 = soepeler (2 van 3)
