@@ -20,6 +20,7 @@ Architecture (designed for ML extension):
 import argparse
 import json
 import logging
+import os
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -397,16 +398,36 @@ class LLMDecider:
 # ---------------------------------------------------------------------------
 
 def send_telegram(message: str, target: str = "") -> bool:
-    """Send a Telegram message via OpenClaw CLI. Returns True if successful."""
-    cmd = ["openclaw", "message", "send", "--channel", "telegram", "--message", message]
-    if target:
-        cmd.extend(["--target", target])
+    """Send a Telegram message via Bot API directly (no OpenClaw, no LLM credits).
+
+    Requires env vars:
+      TELEGRAM_BOT_TOKEN  — from @BotFather
+      TELEGRAM_CHAT_ID    — your personal chat id (override with target arg)
+    """
+    import urllib.request
+    import urllib.parse
+
+    token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+    chat_id = target or os.environ.get("TELEGRAM_CHAT_ID", "")
+
+    if not token or not chat_id:
+        log.warning("Telegram not configured: set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID env vars")
+        return False
+
+    # Strip markdown escapes for plain text (Telegram MarkdownV2 is fragile)
+    plain = message.replace("\\.", ".").replace("\\(", "(").replace("\\)", ")")
+    plain = plain.replace("*", "").replace("_", "").replace("\\", "")
+
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    data = urllib.parse.urlencode({
+        "chat_id": chat_id,
+        "text": plain,
+    }).encode()
+
     try:
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=30, cwd=ROOT)
-        if r.returncode != 0:
-            log.warning("Telegram send failed: %s", (r.stderr or r.stdout)[:200])
-            return False
-        return True
+        req = urllib.request.Request(url, data=data)
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            return resp.status == 200
     except Exception as e:
         log.warning("Telegram send error: %s", e)
         return False
@@ -419,7 +440,7 @@ def format_telegram_message(
     mode: str,
     final: bool = False,
 ) -> str:
-    """Format a compact Telegram notification."""
+    """Format a compact Telegram notification (plain text)."""
     emoji = {
         "ACCEPT": "✅",
         "PROPOSE_CHANGE": "🔧",
@@ -430,14 +451,14 @@ def format_telegram_message(
     icon = emoji.get(dec, "❓")
 
     lines = [
-        f"{icon} *XAUUSD auto\\_improve* \\(iter {iteration}, {mode}\\)",
+        f"{icon} XAUUSD auto_improve (iter {iteration}, {mode})",
         "",
         f"PF={kpis.get('profit_factor', 0):.2f} | "
         f"WR={kpis.get('win_rate_pct', 0):.1f}% | "
         f"DD={kpis.get('max_drawdown', 0):.1f}R | "
         f"Trades={kpis.get('trade_count', 0)}",
         "",
-        f"Decision: *{dec}*",
+        f"Decision: {dec}",
     ]
 
     flags = decision.get("reason_codes", [])
@@ -446,14 +467,14 @@ def format_telegram_message(
 
     changes = decision.get("changes", [])
     for c in changes:
-        lines.append(f"  {c['path']}: {c.get('from')} → {c['to']}")
+        lines.append(f"  {c['path']}: {c.get('from')} -> {c['to']}")
 
     if decision.get("notes"):
-        lines.append(f"_{decision['notes'][:100]}_")
+        lines.append(decision["notes"][:100])
 
     if final:
         lines.append("")
-        lines.append("Loop afgerond\\.")
+        lines.append("Loop afgerond.")
 
     return "\n".join(lines)
 
@@ -624,7 +645,7 @@ def main() -> int:
     # Final Telegram: max iterations reached
     if args.telegram:
         msg = format_telegram_message(args.max_iter, kpis, decision, mode, final=True)
-        send_telegram(msg + "\n\nMax iteraties bereikt\\.", args.telegram_target)
+        send_telegram(msg + "\n\nMax iteraties bereikt.", args.telegram_target)
 
     log.info("Max iterations reached (%d)", args.max_iter)
     return 0
@@ -639,7 +660,10 @@ def install_cron() -> None:
     log_file = "/var/log/opclaw/auto_improve.log"
 
     cron_line = (
-        f"0 6 * * * cd {ROOT} && {venv_python} {script} "
+        f"0 6 * * * cd {ROOT} "
+        f"&& export TELEGRAM_BOT_TOKEN=$(cat /root/.telegram_token 2>/dev/null) "
+        f"&& export TELEGRAM_CHAT_ID=$(cat /root/.telegram_chatid 2>/dev/null) "
+        f"&& {venv_python} {script} "
         f"--max-iter 3 --days 30 --use-llm --telegram "
         f">> {log_file} 2>&1"
     )
