@@ -275,6 +275,69 @@ class RuleBasedDecider:
 # LLM decider (OpenClaw / Anthropic — future)
 # ---------------------------------------------------------------------------
 
+def _extract_json_decision(text: str) -> Optional[dict]:
+    """Extract a JSON decision from LLM response text.
+
+    Handles:
+    - Pure JSON response
+    - JSON wrapped in ```json ... ``` markdown
+    - JSON embedded in explanation text
+    - Multiple JSON blocks (takes the one with 'decision' key)
+    """
+    import re
+
+    text = text.strip()
+
+    # Try 1: direct JSON parse
+    try:
+        d = json.loads(text)
+        if isinstance(d, dict) and "decision" in d:
+            return d
+    except json.JSONDecodeError:
+        pass
+
+    # Try 2: extract from ```json ... ``` block
+    md_match = re.search(r"```(?:json)?\s*\n?(.*?)```", text, re.DOTALL)
+    if md_match:
+        try:
+            d = json.loads(md_match.group(1).strip())
+            if isinstance(d, dict) and "decision" in d:
+                return d
+        except json.JSONDecodeError:
+            pass
+
+    # Try 3: find first { ... } block that contains "decision"
+    brace_matches = re.findall(r"\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}", text, re.DOTALL)
+    for candidate in brace_matches:
+        try:
+            d = json.loads(candidate)
+            if isinstance(d, dict) and "decision" in d:
+                return d
+        except json.JSONDecodeError:
+            continue
+
+    # Try 4: find outermost { ... } with nested braces
+    depth = 0
+    start = None
+    for i, ch in enumerate(text):
+        if ch == "{":
+            if depth == 0:
+                start = i
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0 and start is not None:
+                try:
+                    d = json.loads(text[start : i + 1])
+                    if isinstance(d, dict) and "decision" in d:
+                        return d
+                except json.JSONDecodeError:
+                    pass
+                start = None
+
+    return None
+
+
 class LLMDecider:
     """LLM-based decision engine using OpenClaw CLI."""
 
@@ -312,14 +375,15 @@ class LLMDecider:
             payloads = result.get("result", {}).get("payloads", [])
             text = payloads[0].get("text", "") if payloads else ""
 
-            # Parse JSON from response (might be wrapped in ```json ... ```)
-            text = text.strip()
-            if text.startswith("```"):
-                text = text.split("\n", 1)[1] if "\n" in text else text[3:]
-                text = text.rsplit("```", 1)[0]
+            log.debug("LLM raw response: %s", text[:500])
 
-            decision = json.loads(text)
-            return decision
+            # Extract JSON from response — LLM might wrap it in markdown or add explanation
+            decision = _extract_json_decision(text)
+            if decision:
+                return decision
+
+            log.error("Could not extract JSON decision from LLM response: %s", text[:300])
+            return {"decision": "STOP", "reason_codes": ["LLM_PARSE_ERROR"], "changes": [], "notes": text[:200]}
 
         except subprocess.TimeoutExpired:
             return {"decision": "STOP", "reason_codes": ["LLM_TIMEOUT"], "changes": [], "notes": "LLM timeout"}
