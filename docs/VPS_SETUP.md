@@ -62,21 +62,39 @@ chmod +x scripts/vps_run.sh
 
 ## Dagelijkse routine
 
+### Optie A: Handmatig (tests + rapport)
+
 ```bash
 cd /root/projects/opcw_xauusd
 git pull
-./scripts/vps_run.sh
+./scripts/vps_run.sh         # of: ./scripts/vps_run.sh 90 (voor 90 dagen)
 ```
 
-Dat is alles. Het script:
+### Optie B: Automatische optimalisatie (aanbevolen)
+
+```bash
+cd /root/projects/opcw_xauusd
+git pull
+source .venv310/bin/activate
+python scripts/auto_improve.py --max-iter 3 --days 30           # rule-based
+python scripts/auto_improve.py --max-iter 3 --days 30 --use-llm # met OpenClaw/Claude
+```
+
+### Optie C: Volledig automatisch via cron
+
+```bash
+# Dagelijks om 06:00 UTC
+0 6 * * * cd /root/projects/opcw_xauusd && .venv310/bin/python scripts/auto_improve.py --max-iter 3 --days 30 >> /var/log/opclaw/auto_improve.log 2>&1
+```
+
+### Wat `vps_run.sh` doet:
 
 1. Zet pyenv op Python 3.10.13
 2. Checkt of `.venv310` bestaat — zo niet, maakt het opnieuw aan
 3. Activeert de venv
 4. Upgrade pip/setuptools/wheel
 5. Installeert het project met dev + yfinance extras
-6. Draait `pytest`
-7. Draait `make_report.py`
+6. Draait `run_full_test.py` (fetch + backtest + tests + rapport)
 
 ---
 

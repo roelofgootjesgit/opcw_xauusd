@@ -104,15 +104,108 @@ Baseline: `reports/history/baseline.json` (na `make_report.py --baseline`).
 
 ---
 
-## 4. Korte loop voor de bot
+## 4. Automatische optimalisatie: `auto_improve.py`
 
-1. **Run:** `python scripts/run_full_test.py --days 30 --config configs/xauusd.yaml`
-2. **Lees** nieuwste `logs/oclw_bot_*.log` → regel met `Backtest result:` en eventueel trade-regels.
-3. **Vergelijk** met vorige run: net_pnl, profit_factor, winrate, max_dd, trade_count.
-4. **Besluit:**  
-   - 0 trades → filters soepeler in `configs/xauusd.yaml`.  
-   - Slechtere KPIs → wijziging terugdraaien of andere kleine aanpassing (strenger/selectiever).  
-   - Betere of gelijke KPIs (binnen guardrails) → wijziging behouden, eventueel volgende iteratie.
+**Nieuw (feb 2026):** het hele proces is nu geautomatiseerd. Eén commando doet de volledige loop:
+
+```bash
+# Rule-based (geen API credits nodig):
+python scripts/auto_improve.py --max-iter 3 --days 30
+
+# Met OpenClaw/Claude (Anthropic credits nodig):
+python scripts/auto_improve.py --max-iter 3 --days 30 --use-llm
+```
+
+### Wat het script doet per iteratie:
+
+1. `run_full_test.py` (fetch + backtest + tests + rapport + llm_input.json)
+2. Leest `reports/latest/llm_input.json`
+3. Besluit: ACCEPT / PROPOSE_CHANGE / STOP / REJECT
+4. Past config aan via `apply_changes.py` + re-run
+5. Herhaalt tot ACCEPT, STOP, of max iteraties
+
+### Drie decider-modi:
+
+| Modus | Flag | Credits nodig | Kwaliteit |
+|-------|------|--------------|-----------|
+| **Rule-based** | (default) | Nee | 90% — volgt AGENTS.md heuristieken |
+| **LLM (OpenClaw)** | `--use-llm` | Ja (Anthropic) | 100% — kan patronen herkennen, creatievere combinaties |
+| **ML (toekomst)** | `--use-ml` | Nee | Thompson Sampling op historische performance data |
+
+### Alle opties:
+
+| Flag | Wat het doet |
+|------|-------------|
+| `--max-iter 5` | Max 5 iteraties (default: 1) |
+| `--days 30` | Backtest periode (default: 30) |
+| `--config` | Config YAML (default: configs/xauusd.yaml) |
+| `--dry-run` | Laat beslissingen zien zonder toe te passen |
+| `--skip-first-test` | Gebruik bestaande llm_input.json |
+| `--use-llm` | OpenClaw/Anthropic i.p.v. regels |
+| `--llm-agent main` | OpenClaw agent id (default: main) |
+
+### Voorbeeld output:
+
+```
+auto_improve - INFO - ITERATION 1/3
+auto_improve - INFO - KPIs: PF=0.82 WR=35.3% DD=-7.0R trades=17 | Flags: PF_BELOW_1
+auto_improve - INFO - Decision: PROPOSE_CHANGE | Reasons: ['PF_BELOW_1'] | Changes: 2
+auto_improve - INFO -   Change: backtest.tp_r: 1.5 -> 2.0
+auto_improve - INFO -   Change: strategy.structure_use_h1_gate: false -> true
+...
+auto_improve - INFO - ITERATION 3/3
+auto_improve - INFO - KPIs: PF=1.25 WR=33.3% DD=-4.0R trades=12 | Flags: none
+auto_improve - INFO - Decision: ACCEPT | Reasons: ['ALL_GREEN'] | Changes: 0
+auto_improve - INFO - Loop finished: ACCEPT
+```
+
+---
+
+## 5. Handmatige loop (als alternatief)
+
+1. **Run:** `python scripts/run_full_test.py --days 30 --config configs/xauusd.yaml --report`
+2. **Lees:** `cat reports/latest/llm_input.json`
+3. **Besluit:** maak `decision.json` (handmatig of via Claude)
+4. **Pas toe:** `python scripts/apply_changes.py decision.json --config configs/xauusd.yaml --re-run`
 5. **Herhaal** vanaf stap 1.
+
+---
+
+## 6. ML Roadmap
+
+Het systeem is opgezet als een **pluggable architecture** met een `Decider` interface:
+
+```
+Decider (Protocol)
+├── RuleBasedDecider  ← huidige default (deterministische heuristieken)
+├── LLMDecider        ← OpenClaw/Anthropic (--use-llm)
+└── MLDecider         ← toekomst: Thompson Sampling + historische data
+```
+
+### Geplande ML-uitbreidingen:
+
+1. **MLDecider met Thompson Sampling** — gebruikt `src/trader/ml/strategy_optimizer.py`
+   - Leert van historische run-data in `logs/json/run_*.json`
+   - Kiest parameters op basis van welke combinaties eerder het beste werkten
+   - Beter dan rule-based bij complexe interacties tussen parameters
+
+2. **Feature-gebaseerde beslissingen** — gebruikt `src/trader/ml/features/pipeline.py`
+   - Marktregime-detectie (trending vs ranging)
+   - Volatiliteits-aanpassingen (hogere tp_r bij hogere volatiliteit)
+   - Seizoenspatronen (dag van de week, sessie)
+
+3. **Meta-learning** — gebruikt `src/trader/ml/knowledge_base.py`
+   - Configs opslaan als "genealogie" (welke config kwam voort uit welke)
+   - Regime-tagging (welke config werkt in welk marktregime)
+   - Cross-timeframe learning
+
+### Data die al verzameld wordt:
+
+- `logs/json/run_*.json` — KPIs + settings per run
+- `logs/json/decision_*.json` — elke beslissing met reason_codes
+- `logs/json/auto_improve_*.json` — resultaat per optimizer-sessie
+- `reports/history/baseline.json` — referentiepunt
+
+Deze data vormt de training set voor de MLDecider.
 
 Voor volledige instructie en VPS: zie `docs/INSTRUCTIE_OPENCLAW_BOT.md`.

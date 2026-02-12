@@ -120,7 +120,30 @@ Zie ook `oclw_bot/rules.md` voor de volledige regels.
 
 ## 5. Automatisering op de VPS
 
-### 5.1 Periodiek rapport (bijv. cron)
+### 5.1 Automatisch optimaliseren (aanbevolen)
+
+```bash
+cd /root/projects/opcw_xauusd
+source .venv310/bin/activate
+
+# Rule-based (geen API credits):
+python scripts/auto_improve.py --max-iter 3 --days 30
+
+# Met OpenClaw/Claude (Anthropic credits nodig):
+python scripts/auto_improve.py --max-iter 3 --days 30 --use-llm
+```
+
+Wat het doet per iteratie: fetch → backtest → tests → rapport → beslissing → config aanpassen → herhalen.
+Stopt automatisch bij ACCEPT (alles groen), STOP (cooldown), of max iteraties.
+
+### 5.2 Dagelijks via cron
+
+```bash
+# Dagelijks om 06:00 UTC: max 3 iteraties
+0 6 * * * cd /root/projects/opcw_xauusd && .venv310/bin/python scripts/auto_improve.py --max-iter 3 --days 30 >> /var/log/opclaw/auto_improve.log 2>&1
+```
+
+### 5.3 Periodiek rapport (bijv. cron, zonder optimalisatie)
 
 ```bash
 # Dagelijks om 06:00 (gebruik venv-Python)
