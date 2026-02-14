@@ -142,6 +142,41 @@ def _get_allowed_knobs(config: dict) -> list[dict]:
     return knobs
 
 
+def _get_regime_knobs(config: dict) -> list[dict]:
+    """Extract tunable knobs for regime-specific profiles."""
+    regime_profiles = config.get("regime_profiles", {})
+    knobs = []
+    for regime_name, profile in regime_profiles.items():
+        if not isinstance(profile, dict):
+            continue
+        for param, value in profile.items():
+            if isinstance(value, (int, float, bool)):
+                knob = {
+                    "path": f"regime_profiles.{regime_name}.{param}",
+                    "current": value,
+                }
+                # Set reasonable min/max for known params
+                if param == "tp_r":
+                    knob["min"] = 1.0
+                    knob["max"] = 5.0
+                elif param == "sl_r":
+                    knob["min"] = 0.5
+                    knob["max"] = 3.0
+                elif param == "position_size_multiplier":
+                    knob["min"] = 0.25
+                    knob["max"] = 2.0
+                elif param == "max_trades_per_session":
+                    knob["min"] = 1
+                    knob["max"] = 5
+                elif param == "entry_sweep_disp_fvg_min_count":
+                    knob["min"] = 1
+                    knob["max"] = 3
+                elif isinstance(value, bool):
+                    knob["type"] = "bool"
+                knobs.append(knob)
+    return knobs
+
+
 def _check_cooldown(json_dir: Path, max_streak: int = 3) -> dict:
     """Check last N runs for repeated failures / 0 trades."""
     json_files = sorted(json_dir.glob("run_*.json"), reverse=True)[:max_streak]
@@ -204,6 +239,21 @@ def main() -> None:
     tests = metrics.get("tests", {})
     tests_pass = tests.get("failed", 0) == 0
 
+    # Regime breakdown (if available)
+    regime_breakdown = metrics.get("by_regime", {})
+    regime_rounded = {}
+    for regime_name, regime_kpis in regime_breakdown.items():
+        regime_rounded[regime_name] = {k: _round_val(v) for k, v in regime_kpis.items()}
+
+    # Direction breakdown (if available)
+    direction_breakdown = metrics.get("by_direction", {})
+    direction_rounded = {}
+    for dir_name, dir_kpis in direction_breakdown.items():
+        direction_rounded[dir_name] = {k: _round_val(v) for k, v in dir_kpis.items()}
+
+    # Per-regime allowed knobs
+    regime_knobs = _get_regime_knobs(config)
+
     # Build payload
     payload = {
         "run_id": metrics.get("run_id", "unknown"),
@@ -214,9 +264,12 @@ def main() -> None:
             "failed": tests.get("failed", 0),
         },
         "kpis": cur_kpis_rounded,
+        "by_direction": direction_rounded,
+        "by_regime": regime_rounded,
         "baseline_diff": diff,
         "guardrail_flags": flags,
         "allowed_knobs": knobs,
+        "regime_knobs": regime_knobs,
         "cooldown": cooldown,
         "runs_today": _count_runs_today(json_dir),
         "max_runs_per_day": 10,
@@ -225,7 +278,8 @@ def main() -> None:
             "Do NOT read any other files. Do NOT explore the codebase. "
             "If cooldown is true, respond with decision=STOP. "
             "If guardrail_flags is empty and status=PASS, respond with decision=ACCEPT. "
-            "If you propose changes, use ONLY paths from allowed_knobs."
+            "If you propose changes, use ONLY paths from allowed_knobs or regime_knobs. "
+            "You can now tune per-regime parameters via regime_knobs (e.g. regime_profiles.trending.tp_r)."
         ),
     }
 

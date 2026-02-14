@@ -8,6 +8,12 @@ python-dotenv>=1.0
 # Optional: Yahoo Finance data (voor lokaal testen op echte data)
 yfinance>=0.2
 
+# Optional: Oanda broker integration (live/paper trading)
+# oandapyV20>=0.7
+
+# Optional: Telegram bot
+# python-telegram-bot>=20
+
 # Dev
 # pytest>=7.0
 # pytest-cov

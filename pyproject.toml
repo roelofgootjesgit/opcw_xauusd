@@ -20,6 +20,8 @@ dependencies = [
 dev = ["pytest>=7.0", "pytest-cov"]
 yfinance = ["yfinance>=0.2"]
 telegram = ["python-telegram-bot>=20"]
+oanda = ["oandapyV20>=0.7"]
+live = ["oandapyV20>=0.7", "python-telegram-bot>=20", "yfinance>=0.2"]
 
 [project.scripts]
 oclw_bot = "src.trader.app:main"
