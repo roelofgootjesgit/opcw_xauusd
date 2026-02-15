@@ -6,20 +6,26 @@
 
 ## 1. Huidige fase
 
-We zitten in de **backtest- en rapport-fase** met **VPS/agent-loop** en **optionele ML-optimalisatie**.
+We zitten in **forward-validatie fase**: baseline is gestabiliseerd na 12 iteraties
+(zie `docs/BASELINE_OPTIMIZATION_LOG.md`). Geen wijzigingen tot 40-60 trades
+verzameld zijn.
 
 | Aspect | Status |
 |--------|--------|
-| **Data** | Parquet in `data/market_cache/XAUUSD/`; fetch via Yahoo (GC=F) of eigen data. |
-| **Strategie** | SQE (3 pijlers: trend_context, liquidity_levels, entry_trigger) met ICT-modules; **alleen LONG** in engine (short = TODO). |
-| **Backtest** | Draait stabiel; TP/SL in R; metrics + report naar `reports/latest/` en `logs/`. |
+| **Data** | Parquet in `data/market_cache/XAUUSD/`; fetch via Yahoo (GC=F) of eigen data. ~45 dagen beschikbaar. |
+| **Strategie** | SQE (3 pijlers: trend_context, liquidity_levels, entry_trigger) met ICT-modules; LONG + SHORT actief. |
+| **Backtest** | Draait stabiel; flat tp_r=2.5, sl_r=1.0; **regime_profiles uitgeschakeld** (was schadelijk). 17 trades, PF=1.75, DD=-4R. |
+| **Risk-model** | Mechanisch onderbouwd via MAE/MFE analyse: tp=2.5 op MFE-klif, sl=1.0 = minimaal levensvatbare SL. |
+| **Exit-management** | Gefalsificeerd: time-stop, break-even en combinatie allemaal schadelijk. Pure TP/SL is optimaal. |
 | **Rapport + baseline** | `make_report.py` → REPORT.md + metrics.json; baseline in `reports/history/baseline.json` voor regressie. |
 | **VPS-loop** | Tester + Improver agents (rules in `oclw_bot/rules.md`); alleen wijzigingen accepteren binnen guardrails. |
 | **Telegram** | `telegram_listener.py`: RUN_BACKTEST → backtest → report terug; lock tegen dubbele runs. |
-| **ML** | Config space, rewards, strategy_optimizer, knowledge_base, continuous_learning, features; CLI `oclw_bot optimize`; nog niet in VPS-loop geïntegreerd. |
+| **ML** | Config space, rewards, strategy_optimizer, knowledge_base, continuous_learning, features; CLI `oclw_bot optimize`; **geparkeerd tot forward-validatie compleet**. |
 | **Live/paper** | Niet; broker = stub. MT5/Oanda = TODO. |
 
-**Kort:** Lokaal en op VPS: fetch → backtest → rapport → vergelijken met baseline → alleen groen + guardrails accepteren. Telegram voor on-demand backtest; ML voor lokaal/experimenteel optimaliseren.
+**Kort:** Systeem is intern consistent (entry, TP, SL, exit aligned met prijsgedrag).
+Regime_profiles verwijderd als schadelijke laag. Nu forward-validatie: trades verzamelen,
+niet sleutelen. Zie `docs/BASELINE_OPTIMIZATION_LOG.md` voor het volledige traject.
 
 ---
 
@@ -113,12 +119,23 @@ We zitten in de **backtest- en rapport-fase** met **VPS/agent-loop** en **option
 
 ## 4. Wat er in de loop der tijd is veranderd
 
+- **Baseline-optimalisatie (feb 2026):** 12 iteraties uitgevoerd om baseline te
+  stabiliseren. Hoofdvondst: regime_profiles (trending/ranging/volatile TP/SL modulatie)
+  was de onzichtbare bron van DD en lage WR. Uitgeschakeld. Zie
+  `docs/BASELINE_OPTIMIZATION_LOG.md` voor het volledige traject.
+- **Sessions.py bugfix:** UTC killzone-uren gecorrigeerd (07:15 was foutief Asia,
+  nu correct London). Behouden als integriteitsfix.
+- **MAE/MFE analyse:** tp=2.5 bevestigd als structureel correct (MFE-klif), sl=1.0
+  als minimaal levensvatbaar (winners MAE tot 0.97R).
+- **Exit-management gefalsificeerd:** time-stop, break-even, combinatie — allemaal
+  schadelijk. "Dip-then-grind" profiel vereist pure TP/SL.
 - **Logging:** Naast .log is er **logs/json/run_<ts>.json** voor ML/verzameling; run_id, git_commit, kpis.
-- **Artifacts:** Optioneel `artifacts/run_<ts>/` (metrics.json, report.md, equity.csv) voor Telegram en OpenClaw; `run_backtest_to_artifacts.py` en `run_backtest.sh --out`.
+- **Artifacts:** Optioneel `artifacts/run_<ts>/` (metrics.json, report.md, equity.csv) voor Telegram en OpenClaw.
 - **CLI:** `oclw_bot optimize` toegevoegd voor ML learning cycle.
 - **Telegram:** `telegram_listener.py` voor RUN_BACKTEST met lock en timeout.
-- **Strategie:** 3-pijler config met OR/AND; `require_structure`, `entry_require_sweep_displacement_fvg`, `entry_sweep_disp_fvg_min_count` in config; module-params (sweep_threshold_pct, min_body_pct, enz.) in xauusd.yaml.
-- **Scripts:** `run_full_test.py` met --skip-fetch en --report; `setup_venv.py` voor één-klap setup; `deploy_check.sh` als gate.
+- **Strategie:** 3-pijler config met OR/AND; `require_structure`, `entry_require_sweep_displacement_fvg`, `entry_sweep_disp_fvg_min_count` in config.
+- **Scripts:** Analyse-scripts toegevoegd: `mae_mfe_analysis.py`, `rr_sweep.py`,
+  `time_exit_analysis.py`, `multi_window_validation.py` (zie BASELINE_OPTIMIZATION_LOG.md).
 
 ---
 
@@ -141,7 +158,8 @@ We zitten in de **backtest- en rapport-fase** met **VPS/agent-loop** en **option
 | **docs/SETTINGS.md** | Waar settings staan (YAML + code), hoe we ze bepalen. |
 | **docs/ARTIFACTS_SCHEMA.md** | logs/, logs/json/, artifacts/ layout en formaat. |
 | **docs/TELEGRAM_COMMANDS.md** | Telegram: RUN_BACKTEST, /help, setup. |
-| **docs/TODO.md** | Open taken (MT5/Oanda, session filter, short SQE, enz.). |
+| **docs/BASELINE_OPTIMIZATION_LOG.md** | **Nieuw** — 12 iteraties baseline-stabilisatie, MAE/MFE, regime-vondst. |
+| **docs/TODO.md** | Open taken en forward-validatie protocol. |
 | **oclw_bot/rules.md** | Regels voor Tester- en Improver-Agent. |
 
 Als je dit bestand (en eventueel PROJECT_OVERVIEW_GPT.md) in GPT plakt, heeft het voldoende context om te weten waar het project staat en hoe er mee te werken.

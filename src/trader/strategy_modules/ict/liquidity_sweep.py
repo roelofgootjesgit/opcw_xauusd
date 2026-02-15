@@ -37,6 +37,9 @@ class LiquiditySweepModule(BaseModule):
         df["swing_low"] = df["low"].rolling(lookback, center=False).min().shift(1)
         df["bullish_sweep"] = False
         df["bearish_sweep"] = False
+        # Swept levels: the exact structure point that was swept (for SL anchoring)
+        df["swept_low"] = np.nan
+        df["swept_high"] = np.nan
         for i in range(lookback + rev_n, len(df)):
             sh, sl = df.iloc[i - 1]["swing_high"], df.iloc[i - 1]["swing_low"]
             if pd.isna(sh) or pd.isna(sl):
@@ -46,11 +49,13 @@ class LiquiditySweepModule(BaseModule):
                 for j in range(i, min(i + rev_n + 1, len(df))):
                     if df.iloc[j]["high"] >= sl * (1 + thresh):
                         df.iloc[i, df.columns.get_loc("bullish_sweep")] = True
+                        df.iloc[i, df.columns.get_loc("swept_low")] = sl
                         break
             if h >= sh * (1 + thresh):
                 for j in range(i, min(i + rev_n + 1, len(df))):
                     if df.iloc[j]["low"] <= sh * (1 - thresh):
                         df.iloc[i, df.columns.get_loc("bearish_sweep")] = True
+                        df.iloc[i, df.columns.get_loc("swept_high")] = sh
                         break
         return df
 

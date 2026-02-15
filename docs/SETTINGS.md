@@ -22,9 +22,16 @@ Eén idee: **alle instellingen op één plek, bepalen door meten (backtest + gua
 
 ### Backtest
 - `default_period_days` — periode (dagen) voor backtest
-- `tp_r` — take profit in R (t.o.v. ATR-SL)
-- `sl_r` — stop loss in ATR-multiples
-- `session_filter` — later: alleen London/NY (nu nog `null`)
+- `tp_r` — take profit in R (t.o.v. ATR-SL). **Huidig: 2.5** (mechanisch onderbouwd via MFE-klif)
+- `sl_r` — stop loss in ATR-multiples. **Huidig: 1.0** (minimaal levensvatbaar, winners MAE tot 0.97R)
+- `session_filter` — `null` (killzones te smal voor huidige entry-logica; getest en gerevert)
+
+### Regime profiles
+- `regime_profiles` — **`null` (uitgeschakeld, feb 2026)**. Was trending/ranging/volatile
+  TP/SL modulatie. Bleek schadelijk: ranging sl_r=0.8 doodde winners, volatile R:R=1.33
+  degradeerde expectancy. Flat tp/sl is significant beter (PF 1.13→1.75, DD -7R→-4R).
+  Rollback-instructies staan als comment in `configs/xauusd.yaml`.
+  Zie `docs/BASELINE_OPTIMIZATION_LOG.md` iteratie 9-10 voor volledig bewijs.
 
 ### Risk
 - `max_position_pct` — max positiegrootte (% kapitaal)

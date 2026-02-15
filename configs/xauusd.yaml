@@ -29,30 +29,34 @@ risk:
 # ──────────────────────────────────────────────────────
 # Regime-specifieke profielen
 # ──────────────────────────────────────────────────────
-regime_profiles:
-  trending:
-    tp_r: 3.0              # laat winnaars lopen in trend
-    sl_r: 1.0
-    entry_sweep_disp_fvg_min_count: 2
-    require_structure: true
-    max_trades_per_session: 3
-    position_size_multiplier: 1.0
-
-  ranging:
-    tp_r: 1.5              # snelle TP in range
-    sl_r: 0.8              # strakke SL
-    entry_sweep_disp_fvg_min_count: 3  # strenger: alle 3 nodig
-    require_structure: true
-    max_trades_per_session: 2
-    position_size_multiplier: 0.75
-
-  volatile:
-    tp_r: 2.0
-    sl_r: 1.5              # bredere SL voor volatiliteit
-    entry_sweep_disp_fvg_min_count: 3
-    require_structure: true
-    max_trades_per_session: 1
-    position_size_multiplier: 0.5  # halve positie bij hoge vol
+# DISABLED: regime_profiles verlaagde WR (35→41%) en verhoogde DD (-7R→-4R)
+# door misclassificatie + te strakke ranging SL (0.8) + slechte volatile R:R (1.33:1).
+# Flat tp_r=2.5 sl_r=1.0 is significant beter op 90d sample (N=17).
+# ROLLBACK: uncomment regime_profiles hieronder als multi-window test faalt.
+# Test datum: 2026-02-14
+regime_profiles: null
+# regime_profiles:
+#   trending:
+#     tp_r: 3.0
+#     sl_r: 1.0
+#     entry_sweep_disp_fvg_min_count: 2
+#     require_structure: true
+#     max_trades_per_session: 3
+#     position_size_multiplier: 1.0
+#   ranging:
+#     tp_r: 1.5
+#     sl_r: 0.8
+#     entry_sweep_disp_fvg_min_count: 3
+#     require_structure: true
+#     max_trades_per_session: 2
+#     position_size_multiplier: 0.75
+#   volatile:
+#     tp_r: 2.0
+#     sl_r: 1.5
+#     entry_sweep_disp_fvg_min_count: 3
+#     require_structure: true
+#     max_trades_per_session: 1
+#     position_size_multiplier: 0.5
 
 # ──────────────────────────────────────────────────────
 # News filter (economic calendar)
