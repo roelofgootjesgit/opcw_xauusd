@@ -124,7 +124,57 @@ def _simulate_trade(
     }
 
 
-def run_backtest(cfg: Dict[str, Any]) -> List[Trade]:
+def _load_regime_cache(base_path: Path, symbol: str, start: datetime, end: datetime) -> Optional[pd.Series]:
+    """Try to load cached regime series from Parquet."""
+    cache_file = base_path / symbol.upper() / "regime_15m.parquet"
+    if not cache_file.exists():
+        return None
+    try:
+        df = pd.read_parquet(cache_file)
+        if "regime" not in df.columns:
+            return None
+        s = df["regime"]
+        s.index = pd.to_datetime(s.index)
+        # Check that cached range covers the requested range
+        if s.index.min() <= pd.Timestamp(start) and s.index.max() >= pd.Timestamp(end) - timedelta(hours=1):
+            filtered = s[(s.index >= pd.Timestamp(start)) & (s.index <= pd.Timestamp(end))]
+            if len(filtered) > 50:
+                logger.info("Regime cache hit: %d bars from %s", len(filtered), cache_file)
+                return filtered
+    except Exception as e:
+        logger.debug("Regime cache load failed: %s", e)
+    return None
+
+
+def _save_regime_cache(base_path: Path, symbol: str, regime_series: pd.Series) -> None:
+    """Save regime series to Parquet cache."""
+    cache_dir = base_path / symbol.upper()
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    cache_file = cache_dir / "regime_15m.parquet"
+    try:
+        df = pd.DataFrame({"regime": regime_series})
+        df.to_parquet(cache_file, engine="pyarrow", compression="snappy")
+        logger.info("Regime cache saved: %d bars -> %s", len(regime_series), cache_file)
+    except Exception as e:
+        logger.warning("Failed to save regime cache: %s", e)
+
+
+def run_backtest(
+    cfg: Dict[str, Any],
+    precomputed_regime: Optional[pd.Series] = None,
+) -> List[Trade]:
+    """
+    Run backtest with given config.
+
+    Parameters
+    ----------
+    cfg : dict
+        Full config (symbol, timeframes, backtest, strategy, risk, etc.)
+    precomputed_regime : pd.Series, optional
+        Pre-computed regime series to skip expensive regime detection.
+        Used by parallel_sweep to compute regime once and reuse across
+        multiple config variants.
+    """
     symbol = cfg.get("symbol", "XAUUSD")
     timeframes = cfg.get("timeframes", ["15m"])
     tf = timeframes[0]
@@ -171,20 +221,35 @@ def run_backtest(cfg: Dict[str, Any]) -> List[Trade]:
     if strategy_cfg:
         _deep_merge_sqe(sqe_cfg, strategy_cfg)
 
-    # --- Regime detection ---
-    try:
-        from src.trader.strategy_modules.regime.detector import RegimeDetector
-        detector = RegimeDetector()
-        data_1h_regime = load_parquet(base_path, symbol, "1h", start=start, end=end)
-        if not data_1h_regime.empty:
-            data_1h_regime = data_1h_regime.sort_index()
-        regime_series = detector.classify(data, data_1h_regime if not data_1h_regime.empty else None)
+    # --- Regime detection (with precomputed / cache / fresh fallback) ---
+    if precomputed_regime is not None:
+        # Use pre-computed regime from parallel sweep
+        regime_series = precomputed_regime.reindex(data.index, method="ffill")
         data["regime"] = regime_series
-        logger.info("Regime detection active. Distribution: %s", regime_series.value_counts().to_dict())
-    except ImportError:
-        logger.debug("Regime detector not available, skipping")
-    except Exception as e:
-        logger.warning("Regime detection failed: %s", e)
+        logger.info("Regime (precomputed). Distribution: %s", regime_series.value_counts().to_dict())
+    else:
+        # Try cache first, then compute fresh
+        cached = _load_regime_cache(base_path, symbol, start, end)
+        if cached is not None:
+            regime_series = cached.reindex(data.index, method="ffill")
+            data["regime"] = regime_series
+            logger.info("Regime (cached). Distribution: %s", regime_series.value_counts().to_dict())
+        else:
+            try:
+                from src.trader.strategy_modules.regime.detector import RegimeDetector
+                detector = RegimeDetector()
+                data_1h_regime = load_parquet(base_path, symbol, "1h", start=start, end=end)
+                if not data_1h_regime.empty:
+                    data_1h_regime = data_1h_regime.sort_index()
+                regime_series = detector.classify(data, data_1h_regime if not data_1h_regime.empty else None)
+                data["regime"] = regime_series
+                logger.info("Regime (fresh). Distribution: %s", regime_series.value_counts().to_dict())
+                # Cache for next run
+                _save_regime_cache(base_path, symbol, regime_series)
+            except ImportError:
+                logger.debug("Regime detector not available, skipping")
+            except Exception as e:
+                logger.warning("Regime detection failed: %s", e)
 
     # --- Generate entry signals for both directions ---
     long_entries = run_sqe_conditions(data, "LONG", sqe_cfg)

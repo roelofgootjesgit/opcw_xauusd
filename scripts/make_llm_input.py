@@ -144,7 +144,7 @@ def _get_allowed_knobs(config: dict) -> list[dict]:
 
 def _get_regime_knobs(config: dict) -> list[dict]:
     """Extract tunable knobs for regime-specific profiles."""
-    regime_profiles = config.get("regime_profiles", {})
+    regime_profiles = config.get("regime_profiles") or {}
     knobs = []
     for regime_name, profile in regime_profiles.items():
         if not isinstance(profile, dict):

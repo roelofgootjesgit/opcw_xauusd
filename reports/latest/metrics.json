@@ -1,18 +1,18 @@
 {
-  "run_id": "2026-02-09T20:09:18Z",
-  "git_commit": "0958d74dec94",
+  "run_id": "2026-02-15T10:59:55Z",
+  "git_commit": "903cd8d4f35d",
   "tests": {
-    "passed": 0,
+    "passed": 11,
     "failed": 0
   },
   "kpis": {
-    "net_pnl": 58.150562686008925,
-    "profit_factor": 1.28,
-    "max_drawdown": -7.000000000000012,
-    "winrate": 0.3902439024390244,
-    "win_rate_pct": 39.02439024390244,
-    "expectancy_r": 0.17073170731707313,
-    "trade_count": 41,
-    "avg_holding_hours": 2.9573170731707314
+    "net_pnl": 109.10316666666677,
+    "profit_factor": 0.7692307692307525,
+    "max_drawdown": -6.0,
+    "winrate": 0.23529411764705882,
+    "win_rate_pct": 23.529411764705884,
+    "expectancy_r": -0.1764705882353068,
+    "trade_count": 17,
+    "avg_holding_hours": 1.25
   }
 }

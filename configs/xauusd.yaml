@@ -1,128 +1,85 @@
-# XAUUSD-specific overrides — Live Trading Ready
-
 symbol: XAUUSD
 timeframes:
-  - 15m
-  - 1h
-
-# ──────────────────────────────────────────────────────
-# Backtest settings
-# ──────────────────────────────────────────────────────
+- 15m
+- 1h
 backtest:
   default_period_days: 90
-  tp_r: 2.5   # verhoogd van 1.5: betere R:R bij 33% winrate (breakeven ~1.86R)
+  tp_r: 2.5
   sl_r: 1.0
-  # Session filtering: null = alle sessies, [London, New York] = alleen die twee
-  # XAUUSD beweegt ook buiten London/NY; null geeft meer trades en betere resultaten
   session_filter: null
-
-# ──────────────────────────────────────────────────────
-# Risk management (hard enforced)
-# ──────────────────────────────────────────────────────
 risk:
   max_position_pct: 0.015
-  max_daily_loss_r: 2.5        # circuit breaker: stop trading na -2.5R op een dag
-  max_concurrent_positions: 3   # max 3 open posities tegelijk
-  equity_kill_switch_pct: 10.0  # stop alle trading bij >10R drawdown van peak
-  risk_pct_per_r: 0.01          # 1% van account per 1R risico
-
-# ──────────────────────────────────────────────────────
-# Regime-specifieke profielen
-# ──────────────────────────────────────────────────────
-# DISABLED: regime_profiles verlaagde WR (35→41%) en verhoogde DD (-7R→-4R)
-# door misclassificatie + te strakke ranging SL (0.8) + slechte volatile R:R (1.33:1).
-# Flat tp_r=2.5 sl_r=1.0 is significant beter op 90d sample (N=17).
-# ROLLBACK: uncomment regime_profiles hieronder als multi-window test faalt.
-# Test datum: 2026-02-14
+  max_daily_loss_r: 2.5
+  max_concurrent_positions: 3
+  equity_kill_switch_pct: 10.0
+  risk_pct_per_r: 0.01
 regime_profiles: null
-# regime_profiles:
-#   trending:
-#     tp_r: 3.0
-#     sl_r: 1.0
-#     entry_sweep_disp_fvg_min_count: 2
-#     require_structure: true
-#     max_trades_per_session: 3
-#     position_size_multiplier: 1.0
-#   ranging:
-#     tp_r: 1.5
-#     sl_r: 0.8
-#     entry_sweep_disp_fvg_min_count: 3
-#     require_structure: true
-#     max_trades_per_session: 2
-#     position_size_multiplier: 0.75
-#   volatile:
-#     tp_r: 2.0
-#     sl_r: 1.5
-#     entry_sweep_disp_fvg_min_count: 3
-#     require_structure: true
-#     max_trades_per_session: 1
-#     position_size_multiplier: 0.5
-
-# ──────────────────────────────────────────────────────
-# News filter (economic calendar)
-# ──────────────────────────────────────────────────────
 news_filter:
-  enabled: false  # zet op true als je calendar data hebt
-  calendar_source: oanda  # oanda of forexfactory
-
+  enabled: false
+  calendar_source: oanda
   high_impact:
     pre_minutes: 30
     post_minutes: 60
     action: NO_TRADE
-
   medium_impact:
     pre_minutes: 15
     post_minutes: 30
     action: REDUCE_SIZE
-
   low_impact:
     action: NONE
-
-  # Specifieke event overrides
   event_overrides:
-    FOMC: { pre_minutes: 60, post_minutes: 120, action: NO_TRADE }
-    NFP: { pre_minutes: 30, post_minutes: 90, action: NO_TRADE }
-    CPI: { pre_minutes: 30, post_minutes: 60, action: NO_TRADE }
-    PPI: { pre_minutes: 15, post_minutes: 30, action: NO_TRADE }
-    GDP: { pre_minutes: 15, post_minutes: 30, action: NO_TRADE }
-    "Fed Chair": { pre_minutes: 30, post_minutes: 60, action: NO_TRADE }
-    "Interest Rate": { pre_minutes: 60, post_minutes: 120, action: NO_TRADE }
-
-# ──────────────────────────────────────────────────────
-# Sentiment engine
-# ──────────────────────────────────────────────────────
+    FOMC:
+      pre_minutes: 60
+      post_minutes: 120
+      action: NO_TRADE
+    NFP:
+      pre_minutes: 30
+      post_minutes: 90
+      action: NO_TRADE
+    CPI:
+      pre_minutes: 30
+      post_minutes: 60
+      action: NO_TRADE
+    PPI:
+      pre_minutes: 15
+      post_minutes: 30
+      action: NO_TRADE
+    GDP:
+      pre_minutes: 15
+      post_minutes: 30
+      action: NO_TRADE
+    Fed Chair:
+      pre_minutes: 30
+      post_minutes: 60
+      action: NO_TRADE
+    Interest Rate:
+      pre_minutes: 60
+      post_minutes: 120
+      action: NO_TRADE
 sentiment:
-  enabled: false  # zet op true om sentiment mee te nemen
+  enabled: false
   weights:
     dxy: 0.25
     cot: 0.25
     us10y: 0.15
     vix: 0.15
-    etf_flows: 0.10
-    fear_greed: 0.10
-  min_score_long: 0.1      # sentiment moet minimaal licht bullish voor LONG
-  min_score_short: -0.1    # minimaal licht bearish voor SHORT
-  strong_signal_boost: 0.3  # bij score > 0.3: grotere positie
+    etf_flows: 0.1
+    fear_greed: 0.1
+  min_score_long: 0.1
+  min_score_short: -0.1
+  strong_signal_boost: 0.3
   strong_signal_multiplier: 1.5
-  contrary_block: true     # bij tegengesteld sentiment: blokkeer trade
+  contrary_block: true
   contrary_threshold: 0.3
-
-# ──────────────────────────────────────────────────────
-# Broker configuratie (Oanda v20)
-# ──────────────────────────────────────────────────────
 broker:
   provider: oanda
-  environment: practice   # practice of live
-  account_id: ""          # vul in via .env of hier
-  token: ""               # vul in via .env (OANDA_TOKEN)
+  environment: practice
+  account_id: ''
+  token: ''
   instrument: XAU_USD
   initial_balance: 10000
   leverage: 100
-  margin_rate: 0.05       # 5% margin voor XAUUSD
-
-# ──────────────────────────────────────────────────────
-# Monitoring & Telegram
-# ──────────────────────────────────────────────────────
+  margin_rate: 0.05
 monitoring:
   telegram:
     enabled: false
@@ -133,63 +90,53 @@ monitoring:
       error_alerts: true
       regime_change: true
     commands:
-      - /status
-      - /equity
-      - /regime
-      - /stop
-      - /resume
-      - /run_backtest
-      - /help
-
-  # Spread monitoring
+    - /status
+    - /equity
+    - /regime
+    - /stop
+    - /resume
+    - /run_backtest
+    - /help
   spread:
     enabled: true
-    max_spread_pips: 40   # geen trades boven 40 pips spread
+    max_spread_pips: 40
     warning_spread_pips: 25
-
-  # Correlatie monitor
   correlations:
     dxy_inverse_check: true
     sp500_risk_check: true
-
-# ──────────────────────────────────────────────────────
-# Strategy (ICT 3-pillar model)
-# ──────────────────────────────────────────────────────
 strategy:
   name: sqe_xauusd
-  # ---- 3 pillars (tp_r 2.5 voor betere R:R, liquidity OR voor voldoende trades) ----
   trend_context:
-    modules: [market_structure_shift, displacement]
-    require_all: false  # OR: structure OF momentum
+    modules:
+    - market_structure_shift
+    - displacement
+    require_all: false
   liquidity_levels:
-    modules: [liquidity_sweep, fair_value_gaps]
-    require_all: false  # OR: sweep OF FVG (AND gaf 0 trades)
+    modules:
+    - liquidity_sweep
+    - fair_value_gaps
+    require_all: false
   entry_trigger:
     module: displacement
-  # Module params (losser dan code-defaults)
   liquidity_sweep:
     lookback_candles: 20
-    sweep_threshold_pct: 0.15  # was 0.2: kleinere sweep telt mee
-    reversal_candles: 4         # was 3: iets meer tijd voor reversal
+    sweep_threshold_pct: 0.15
+    reversal_candles: 4
   displacement:
-    min_body_pct: 60   # was 70: iets kleinere body ok
-    min_candles: 2     # was 3: 2 sterke candles volstaan
-    min_move_pct: 1.5  # verhoogd van 1.0: filtert zwakke displacements
+    min_body_pct: 60
+    min_candles: 2
+    min_move_pct: 1.5
   fair_value_gaps:
-    min_gap_pct: 0.3   # was 0.5: kleinere gap telt
-    validity_candles: 80  # was 50: FVG langer "geldig"
+    min_gap_pct: 0.3
+    validity_candles: 80
   market_structure_shift:
     swing_lookback: 5
-    break_threshold_pct: 0.15  # was 0.2: lichtere break telt
-  # Alleen trades in expliciete structuur (HH/HL of LH/LL); RANGE blokkeren → betere PnL/DD
+    break_threshold_pct: 0.15
   require_structure: true
-  # H1-structuurgate: true = ook H1 moet matching structure voor entry richting
-  structure_use_h1_gate: true   # aan: filtert counter-trend entries via H1
-  # Stap 2: entry alleen bij sweep + displacement + FVG (liquidity = target, niet entry)
+  structure_use_h1_gate: true
   entry_require_sweep_displacement_fvg: true
-  # Binnen N bars: min_count van 3 (sweep+disp+fvg), 2 = soepeler (2 van 3)
   entry_sweep_disp_fvg_lookback_bars: 5
   entry_sweep_disp_fvg_min_count: 2
   structure_context:
-    lookback: 30   # bars om swing highs/lows te bepalen
-    pivot_bars: 2  # lokaal max/min over 2*N+1 bars
+    lookback: 30
+    pivot_bars: 2
